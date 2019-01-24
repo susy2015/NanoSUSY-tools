@@ -43,6 +43,8 @@ class Stop0lObjectsProducer(Module):
         self.out.branch("Stop0l_nbtags",   "I")
         self.out.branch("Stop0l_nSoftb",   "I")
 	self.out.branch("Stop0l_MtlepMET", "F", lenVar="nElectron + nMuon")
+	self.out.branch("Stop0l_nElectron","I")
+	self.out.branch("Stop0l_nMuon",    "I")
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -199,6 +201,8 @@ class Stop0lObjectsProducer(Module):
         self.out.fillBranch("Stop0l_nSoftb",   sum(self.SB_Stop0l))
         self.out.fillBranch("Stop0l_METSig",   met.pt / math.sqrt(HT) if HT > 0 else 0)
 	self.out.fillBranch("Stop0l_MtlepMET", MtLepMET)
+	self.out.fillBranch("Stop0l_nElectron",sum(self.Electron_Stop0l))
+	self.out.fillBranch("Stop0l_nMuon",    sum(self.Muon_Stop0l))
         return True
 
 
