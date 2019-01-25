@@ -11,8 +11,8 @@ from PhysicsTools.NanoSUSYTools.modules.qcdSmearProducer import *
 from PhysicsTools.NanoSUSYTools.modules.tauMVAProducer import *
 
 mods = [
-    #qcdSmearProducer(),
-    tauMVAProducer(),
+    qcdSmearProducer(),
+    #tauMVAProducer(),
 ]
 
 files=["root://cmseos.fnal.gov//store/user/benwu/Stop18/NtupleSyncMiniAOD/NanoSUSY/2018Xmas/prod2017MC_NANO.root"]
