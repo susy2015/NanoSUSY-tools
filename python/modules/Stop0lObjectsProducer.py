@@ -42,12 +42,16 @@ class Stop0lObjectsProducer(Module):
         self.out.branch("Stop0l_nJets",    "I")
         self.out.branch("Stop0l_nbtags",   "I")
         self.out.branch("Stop0l_nSoftb",   "I")
+	self.out.branch("Stop0l_MtlepMET", "F", lenVar="nElectron + nMuon")
+	self.out.branch("Stop0l_nElectron","I")
+	self.out.branch("Stop0l_nMuon",    "I")
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
 
 
     def SelEle(self, ele):
+	#print "ele pt: %d, ele eta: %d", ele.pt, ele.eta
         if math.fabs(ele.eta) > 2.5 or ele.pt < 5:
             return False
         ## Veto ID electron
@@ -79,6 +83,14 @@ class Stop0lObjectsProducer(Module):
         if mtW  > 100:
             return False
         return True
+
+    def SelMtlepMET(self, ele, muon, met):
+	mt = []
+	for l in ele:
+		mt.append(math.sqrt( 2 * met.pt * l.pt * (1 - math.cos(met.phi-l.phi))))
+	for l in muon:
+		mt.append(math.sqrt( 2 * met.pt * l.pt * (1 - math.cos(met.phi-l.phi))))
+	return mt
 
     def SelBtagJets(self, jet):
         global DeepCSVMediumWP
@@ -170,6 +182,7 @@ class Stop0lObjectsProducer(Module):
         ## TODO: Need to improve speed
         HT = self.CalHT(jets)
         Mtb, Ptb = self.CalMTbPTb(jets, met)
+	MtLepMET = self.SelMtlepMET(electrons, muons, met)
 
         ### Store output
         self.out.fillBranch("Electron_Stop0l", self.Electron_Stop0l)
@@ -187,6 +200,9 @@ class Stop0lObjectsProducer(Module):
         self.out.fillBranch("Stop0l_nbtags",   sum(self.BJet_Stop0l))
         self.out.fillBranch("Stop0l_nSoftb",   sum(self.SB_Stop0l))
         self.out.fillBranch("Stop0l_METSig",   met.pt / math.sqrt(HT) if HT > 0 else 0)
+	self.out.fillBranch("Stop0l_MtlepMET", MtLepMET)
+	self.out.fillBranch("Stop0l_nElectron",sum(self.Electron_Stop0l))
+	self.out.fillBranch("Stop0l_nMuon",    sum(self.Muon_Stop0l))
         return True
 
 

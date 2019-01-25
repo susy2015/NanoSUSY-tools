@@ -38,7 +38,8 @@ class Stop0lBaselineProducer(Module):
         countEle = sum([e.Stop0l for e in eles])
         countMu  = sum([m.Stop0l for m in muons])
         countIsk = sum([i.Stop0l for i in isks])
-        return (countEle + countMu + countIsk == 0)
+        #return (countEle + countMu + countIsk == 0)
+        return (countEle + countMu == 0)
 
 
     def PassEventFilter(self, flags):
