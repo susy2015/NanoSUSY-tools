@@ -9,7 +9,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.postprocessing.tools import deltaPhi, deltaR, closest
 
 class qcdSmearProducer(Module): 
-    def __init__(self):
+    def __init__(self)
         self.writeHistFile=True
         self.metBranchName="MET"
         self.xBinWidth = 0.01
@@ -54,6 +54,38 @@ class qcdSmearProducer(Module):
         self.out = wrappedOutputTree
         self.out.branch("origRes", "F");
         self.out.branch("jetFlav", "F");
+	self.writeHistFile=True
+	self.metBranchName="MET"
+	self.xBinWidth = 0.01
+	self.minWindow = 0.01
+	self.maxWindow = 0.5;
+	self.nSmears = 100;
+	self.nSmearJets = 2;
+	self.nBootstraps = 50;
+	self.LINEAR_GRANULATED=True
+	self.winType = self.LINEAR_GRANULATED;
+	self.doFlatSampling = True;
+	self.respInputName = "JetResByFlav";
+	self.respFileName = "file:/eos/uscms/store/user/mkilpatr/13TeV/qcd_smearing/resTailOut_combined_filtered_CHEF_puWeight_weight_WoH_NORMALIZED.root"
+	self.respHistoName = "res_b_comp_14"
+	self.targeth = self.loadHisto(self.respFileName,self.respHistoName)
+ 
+    def loadHisto(self,filename,hname):
+	tf = ROOT.TFile.Open(filename)
+	hist = tf.Get(hname)
+	hist.SetDirectory(None)
+	tf.Close()
+	return hist
+
+    def beginJob(self,histFile=None,histDirName=None):
+   	pass
+    def endJob(self):
+	pass 
+
+    def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
+        self.out = wrappedOutputTree
+	self.out.branch("origRes", "F");
+	self.out.branch("jetFlav", "F");
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -219,7 +251,6 @@ class qcdSmearProducer(Module):
             self.out.fillBranch("origRes", origRes_)
             if len(SmearJets) == 0:
               pass
-        return True
         origRecojet = jets
         origmet = met
         origweight = weight
@@ -255,4 +286,4 @@ class qcdSmearProducer(Module):
            canSmear = false
            met = origmet
            jets = origRecojet
-        return True    
+       return True
