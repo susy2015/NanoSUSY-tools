@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os, sys
 import ROOT
-import time
+from array import array
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 from importlib import import_module
 
@@ -41,12 +41,19 @@ class qcdSmearProducer(Module):
 	inTree = inFile.Get("Events")
 	return inFile, inTree
 
-    def storeSmearFile(self, outFileName, inTree, eventNum):
-	outFile = ROOT.TFile.Open(outFileName, "recreate")
-	outTree = inTree.CloneTree(inTree.GetReadEntry())
-	inTree.GetEntry(eventNum)
+    def storeSmearFile(self, outFileName, inTree, Jet_pt, MET_pt):
+	outFile = ROOT.TFile.Open(outFileName, "update")
+	inTree.SetBranchStatus("Jet_pt", 0)
+	inTree.SetBranchStatus("MET_pt", 0)
+	outTree = inTree.CloneTree(0)
+	jetpt = array( 'f', Jet_pt )
+	outTree.Branch('Jet_pt', jetpt, 'Jet_pt/F')
+	#metpt = array( 'f', MET_pt )
+	#outTree.Branch('MET_pt', metpt, 'MET_pt/F')
 	outTree.Fill()
 	outTree.Write()
+	inTree.SetBranchStatus("Jet_pt", 1)
+	inTree.SetBranchStatus("MET_pt", 1)
 	
     def ptmapping(self,jets):
 	ptrange = [0, 50, 75, 100, 125, 150, 200, 250, 300, 400, 500, 700, 1000, 1500]	
@@ -71,9 +78,6 @@ class qcdSmearProducer(Module):
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
-	self.out.branch("Jet_pt", "F", lenVar="nJet")
-	self.out.branch("MET_pt", "F")
-
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -182,7 +186,7 @@ class qcdSmearProducer(Module):
         tot = v1-v2
         return tot
     
-    def analyze(self, event):
+    def analyze(self, event, inTree):
         jets      = Collection(event, "Jet")
         genjets   = Collection(event, "GenJet")
         met       = Object(event,     self.metBranchName)
@@ -191,7 +195,6 @@ class qcdSmearProducer(Module):
 
 	#Attempt to make new root file
 	#Create a new file + a clone of old tree in new file
-	inFile, inTree = self.storeSmear("/uscms_data/d3/lpcsusyhad/benwu/Moriond2019/TestNanoAOD/CMSSW_10_4_X_2018-12-11-2300/src/prod2017MC_NANO.root")
 	
 	#Need to initialize a random seed
 	ROOT.gRandom.SetSeed(123456)
@@ -303,9 +306,7 @@ class qcdSmearProducer(Module):
 			#print "recoJets: ", recoJets
 			smearWeight /= float(self.nSmears)
 			weight *= smearWeight
-			self.out.fillBranch("Jet_pt",     recoJets)
-			self.out.fillBranch("MET_pt",     met.Pt())
-			self.storeSmearFile(self.outFileName + str(eventNum) + "_" + str(iS) + ".root", inTree, eventNum)
+			self.storeSmearFile(self.outFileName + str(eventNum) + "_" + str(iS) + ".root", inTree, recoJets, met.Pt())
 			#Here is where we need to push values to a new tree
 
 		smearWeight = 1.0
@@ -313,7 +314,5 @@ class qcdSmearProducer(Module):
 		canSmear = False
 		met = originalMET
 		jets = originalRecoJets
-		self.out.fillBranch("Jet_pt",     originalRecoJets_pt)
-		self.out.fillBranch("MET_pt",     originalMET.pt)
 	
         return True    
