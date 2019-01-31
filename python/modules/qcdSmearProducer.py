@@ -19,7 +19,7 @@ class qcdSmearProducer(Module):
         self.xBinWidth = 0.01
         self.minWindow = 0.01
         self.maxWindow = 0.5
-        self.nSmears = 100
+        self.nSmears = 2
         self.nSmearJets = 2
         self.nBootstraps = 50
         self.LINEAR_GRANULATED=True
@@ -36,24 +36,23 @@ class qcdSmearProducer(Module):
 	tf.Close()
 	return hist
 
-    def storeSmear(self, fname):
-	inFile = ROOT.TFile.Open(fname)
-	inTree = inFile.Get("Events")
-	return inFile, inTree
-
-    def storeSmearFile(self, outFileName, inTree, Jet_pt, MET_pt):
-	outFile = ROOT.TFile.Open(outFileName, "update")
+    def storeSmearFile(self, outFileName, inTree, Jet_pt, MET_pt, weight):
+	outFile = ROOT.TFile.Open(outFileName, "recreate")
 	inTree.SetBranchStatus("Jet_pt", 0)
 	inTree.SetBranchStatus("MET_pt", 0)
+	inTree.SetBranchStatus("genWeight", 0)
 	outTree = inTree.CloneTree(0)
 	jetpt = array( 'f', Jet_pt )
 	outTree.Branch('Jet_pt', jetpt, 'Jet_pt/F')
-	#metpt = array( 'f', MET_pt )
-	#outTree.Branch('MET_pt', metpt, 'MET_pt/F')
+	metpt = array( 'f', [MET_pt] )
+	outTree.Branch('MET_pt', metpt, 'MET_pt/F')
+	genWeight = array( 'f', [weight] )
+	outTree.Branch('genWeight', genWeight, 'genWeight/F')
 	outTree.Fill()
 	outTree.Write()
 	inTree.SetBranchStatus("Jet_pt", 1)
 	inTree.SetBranchStatus("MET_pt", 1)
+	inTree.SetBranchStatus("genWeight", 1)
 	
     def ptmapping(self,jets):
 	ptrange = [0, 50, 75, 100, 125, 150, 200, 250, 300, 400, 500, 700, 1000, 1500]	
@@ -306,7 +305,7 @@ class qcdSmearProducer(Module):
 			#print "recoJets: ", recoJets
 			smearWeight /= float(self.nSmears)
 			weight *= smearWeight
-			self.storeSmearFile(self.outFileName + str(eventNum) + "_" + str(iS) + ".root", inTree, recoJets, met.Pt())
+			self.storeSmearFile(self.outFileName + str(eventNum) + "_" + str(iS) + ".root", inTree, recoJets, met.Pt(), weight)
 			#Here is where we need to push values to a new tree
 
 		smearWeight = 1.0
@@ -314,5 +313,5 @@ class qcdSmearProducer(Module):
 		canSmear = False
 		met = originalMET
 		jets = originalRecoJets
-	
+
         return True    
