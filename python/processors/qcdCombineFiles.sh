@@ -1,13 +1,13 @@
 #!/bin/bash
 
-ls Smear_tree_* > output.txt
+ls *.root > output.txt
 
 counter=0
 totcounter=0
 files=""
 filename=0
 loopnum=0
-
+getFinalName=''
 totLines=$(wc -l output.txt | awk '{ print $1 }')
 
 while [ $totLines -ne 1 ]
@@ -17,6 +17,10 @@ do
 	
 	while read p; do
 	
+		if [[ ${p} != *"Smear_tree"* ]]; then
+			getFinalName=${p%.*}
+		fi
+		
 		files="$files $p"
 		counter=$[counter+1]
 		totcounter=$[totcounter+1]
@@ -34,10 +38,10 @@ do
 
 	filename=0
 	totcounter=0
-	ls Smear_tree_* > output.txt
+	ls *.root > output.txt
 	totLines=$(wc -l output.txt | awk '{ print $1 }')
 
 done
 
-mv Smear_tree_buff_${loopnum}_0.root Smear_tree.root
+mv Smear_tree_buff_${loopnum}_0.root ${getFinalName}_smear.root
 
