@@ -1,6 +1,7 @@
 #!/bin/bash
 
-ls *.root > output.txt
+#ls *.root > output.txt
+ls Smear_tree_*.root > output.txt
 
 counter=0
 totcounter=0
@@ -25,9 +26,10 @@ do
 		counter=$[counter+1]
 		totcounter=$[totcounter+1]
 		
-		if [ $counter -eq 1000 ] || [ $totcounter -eq $totLines ]
+		if [ $counter -eq 10000 ] || [ $totcounter -eq $totLines ]
 		then
-			haddnano.py Smear_tree_buff_${loopnum}_${filename}.root ${files}
+			#haddnano.py Smear_tree_buff_${loopnum}_${filename}.root ${files}
+			python ahadd.py Smear_tree_buff_${loopnum}_${filename}.root ${files}
 			rm -f ${files}
 			counter=0
 			files=""
@@ -38,7 +40,8 @@ do
 
 	filename=0
 	totcounter=0
-	ls *.root > output.txt
+	#ls *.root > output.txt
+	ls Smear_tree_*.root > output.txt
 	totLines=$(wc -l output.txt | awk '{ print $1 }')
 
 done

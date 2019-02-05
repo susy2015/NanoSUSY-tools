@@ -19,11 +19,9 @@ class qcdSmearProducer(Module):
         self.xBinWidth = 0.01
         self.minWindow = 0.01
         self.maxWindow = 0.5
-        self.nSmears = 2
+        self.nSmears = 100
         self.nSmearJets = 2
         self.nBootstraps = 50
-        self.LINEAR_GRANULATED=True
-        self.winType = self.LINEAR_GRANULATED
         self.doFlatSampling = True
         self.respInputName = "JetResByFlav"
         self.respFileName = "file:/eos/uscms/store/user/ddash/qcd_smeared/resTailOut_combined_filtered_CHEF_puWeight_weight_WoH_NORMALIZED.root"
@@ -36,22 +34,40 @@ class qcdSmearProducer(Module):
 	tf.Close()
 	return hist
 
-    def storeSmearFile(self, outFileName, inTree, Jet_pt, MET_pt, weight):
+    def storeSmearFile(self, outFileName, inTree, Jet_pt, Jet_eta, Jet_phi, Jet_mass, MET, weight, b):
 	outFile = ROOT.TFile.Open(outFileName, "recreate")
 	inTree.SetBranchStatus("Jet_pt", 0)
+	inTree.SetBranchStatus("Jet_eta", 0)
+	inTree.SetBranchStatus("Jet_phi", 0)
+	inTree.SetBranchStatus("Jet_mass", 0)
 	inTree.SetBranchStatus("MET_pt", 0)
+	inTree.SetBranchStatus("MET_phi", 0)
 	inTree.SetBranchStatus("genWeight", 0)
 	outTree = inTree.CloneTree(0)
 	jetpt = array( 'f', Jet_pt )
 	outTree.Branch('Jet_pt', jetpt, 'Jet_pt/F')
-	metpt = array( 'f', [MET_pt] )
+	jeteta = array( 'f', Jet_eta )
+	outTree.Branch('Jet_eta', jeteta, 'Jet_eta/F')
+	jetphi = array( 'f', Jet_phi )
+	outTree.Branch('Jet_phi', jetphi, 'Jet_phi/F')
+	jetmass = array( 'f', Jet_mass )
+	outTree.Branch('Jet_mass', jetmass, 'Jet_mass/F')
+	metpt = array( 'f', [MET.Pt()] )
 	outTree.Branch('MET_pt', metpt, 'MET_pt/F')
+	metphi = array( 'f', [MET.Phi()] )
+	outTree.Branch('MET_phi', metphi, 'MET_phi/F')
 	genWeight = array( 'f', [weight] )
 	outTree.Branch('genWeight', genWeight, 'genWeight/F')
+	bootstrap = array( 'i', b )
+	outTree.Branch('bootstrapWeight', bootstrap, 'bootstrapWeight/I')
 	outTree.Fill()
 	outTree.Write()
 	inTree.SetBranchStatus("Jet_pt", 1)
+	inTree.SetBranchStatus("Jet_eta", 1)
+	inTree.SetBranchStatus("Jet_phi", 1)
+	inTree.SetBranchStatus("Jet_mass", 1)
 	inTree.SetBranchStatus("MET_pt", 1)
+	inTree.SetBranchStatus("MET_phi", 1)
 	inTree.SetBranchStatus("genWeight", 1)
 	
     def ptmapping(self,jets):
@@ -77,6 +93,7 @@ class qcdSmearProducer(Module):
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
+	#self.out.branch("bootstrapWeight",         "I")
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
@@ -192,15 +209,14 @@ class qcdSmearProducer(Module):
 	weight    = event.genWeight
 	eventNum  = event.event
 
-	#Attempt to make new root file
-	#Create a new file + a clone of old tree in new file
-	
 	#Need to initialize a random seed
 	ROOT.gRandom.SetSeed(123456)
-        
-        #bootstrapping should be done here
-        #the histogram can be accessed by doing self.targeth.{some root function to get the value}
-        #xBinWidth = float(2/self.targeth.GetNbinsX())
+
+	b = []        
+
+	for iB in xrange(self.nBootstraps) :
+		b.append(min(255,ROOT.gRandom.Poisson(1)))
+
         xBinWidth = 0.01
 
         #begin smearing
@@ -257,6 +273,10 @@ class qcdSmearProducer(Module):
 
         for iS in xrange(self.nSmears) :
 		recoJets = []
+		recoJets_pt = []
+		recoJets_eta = []
+		recoJets_phi = []
+		recoJets_mass = []
 		originalRecoJets_pt = []
 		for iJ in xrange(self.nSmearJets) :
 			info = SmearJets[iJ]
@@ -290,23 +310,28 @@ class qcdSmearProducer(Module):
 			else:        met = self.addTLorentzVector(met, recoJet)
 			newp4 = ROOT.TLorentzVector()
 			newp4.SetPtEtaPhiM(newResValue * info[0].pt,recoJet.eta,recoJet.phi,recoJet.mass)
-			recoJets.append(newp4.Pt())
+			recoJets.append(newp4)
 			met -= newp4
 
 		for j in xrange(len(originalRecoJets)):
 			if j == SmearJets[0][1] or j == SmearJets[1][1] :
 				continue
 			else :
-				recoJets.append(originalRecoJets[j].pt)
-			originalRecoJets_pt.append(originalRecoJets[j].pt)
+				jet_buff = ROOT.TLorentzVector()
+				jet_buff.SetPtEtaPhiM(originalRecoJets[j].pt, originalRecoJets[j].eta, originalRecoJets[j].phi, originalRecoJets[j].mass)
+				recoJets.append(jet_buff)
+			#originalRecoJets_pt.append(originalRecoJets[j].pt)
 
 		if canSmear :
-			recoJets.sort(key = lambda j : j, reverse = True)
-			#print "recoJets: ", recoJets
+			recoJets.sort(key = lambda j : j.Pt(), reverse = True)
+			for j in xrange(len(recoJets)) :
+				recoJets_pt.append(recoJets[j].Pt())
+				recoJets_eta.append(recoJets[j].Eta())
+				recoJets_phi.append(recoJets[j].Phi())
+				recoJets_mass.append(recoJets[j].M())
 			smearWeight /= float(self.nSmears)
 			weight *= smearWeight
-			self.storeSmearFile(self.outFileName + str(eventNum) + "_" + str(iS) + ".root", inTree, recoJets, met.Pt(), weight)
-			#Here is where we need to push values to a new tree
+			self.storeSmearFile(self.outFileName + str(eventNum) + "_" + str(iS) + ".root", inTree, recoJets_pt, recoJets_eta, recoJets_phi, recoJets_mass, met, weight, b)
 
 		smearWeight = 1.0
 		weight = originalWeight
@@ -314,4 +339,5 @@ class qcdSmearProducer(Module):
 		met = originalMET
 		jets = originalRecoJets
 
+	#self.out.fillBranch("bootstrapWeight",         b)
         return True    
