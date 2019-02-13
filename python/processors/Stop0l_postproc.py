@@ -23,11 +23,11 @@ def main(args):
         isfastsim = True
 
     mods = [
-        eleMiniCutID(),
-        Stop0lObjectsProducer(args.era),
-        DeepTopProducer(args.era),
-        Stop0lBaselineProducer(args.era, isData=isdata, isFastSim=isfastsim),
-        UpdateGenWeight(args.crossSection, args.nEvents)
+        #eleMiniCutID(),
+        #Stop0lObjectsProducer(args.era),
+        #DeepTopProducer(args.era),
+        #Stop0lBaselineProducer(args.era, isData=isdata, isFastSim=isfastsim),
+        #UpdateGenWeight(args.crossSection, args.nEvents)
     ]
 
     if args.era == "2016":

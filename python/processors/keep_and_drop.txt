@@ -25,3 +25,15 @@ drop Jet_Cvs*
 drop Jet_btagDeepFlavB
 drop Jet_*Mult 
 drop Jet_*EF
+## Drop added by Matt
+drop HLT_*
+drop Flag_*
+drop SB_*
+drop *cleanmask
+drop Photon_*
+drop PV_*
+drop Pileup_*
+drop *LHE*
+drop *GenVisTau*
+drop Generator_*
+drop *GenPart*
