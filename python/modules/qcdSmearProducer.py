@@ -19,7 +19,7 @@ class qcdSmearProducer(Module):
         self.xBinWidth = 0.01
         self.minWindow = 0.01
         self.maxWindow = 0.5
-        self.nSmears = 100
+        self.nSmears = 2
         self.nSmearJets = 2
         self.nBootstraps = 50
         self.doFlatSampling = True
@@ -260,7 +260,7 @@ class qcdSmearProducer(Module):
 		minProb, maxProb, minRes, maxRes = self.getScaledWindowAndProb(targeth,origRes_,self.minWindow,self.maxWindow)
 		if minProb - maxProb == 0 : continue
 		
-		SmearJets_buff = [gJ,rJI,targeth,minProb,maxProb,minRes,maxRes] 
+		SmearJets_buff = [gJ,recoJet,targeth,minProb,maxProb,minRes,maxRes] 
 		SmearJets.append(SmearJets_buff)
 
         if len(SmearJets) == 0: return True
@@ -304,7 +304,7 @@ class qcdSmearProducer(Module):
 				smearingCorr = maxProb - minProb
 
 			smearWeight *= smearingCorr / contribProb
-			recoJet = jets[info[1]]		
+			recoJet = info[1]
 	
 			if iJ == 0 : met = self.addFourVector(met, recoJet)
 			else:        met = self.addTLorentzVector(met, recoJet)

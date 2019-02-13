@@ -13,6 +13,11 @@ DeepCSVMediumWP ={
     "2017" : 0.4941,
 }
 
+CSVv2MediumWP = {
+    "2016" : 0.8484,
+    "2017" : 0.8838
+}
+
 class Stop0lObjectsProducer(Module):
     def __init__(self, era):
         self.era = era
@@ -32,9 +37,8 @@ class Stop0lObjectsProducer(Module):
         self.out.branch("Jet_Stop0l",      "O", lenVar="nJet")
         self.out.branch("SB_Stop0l",       "O", lenVar="nSB")
         self.out.branch("Jet_btagStop0l",  "O", lenVar="nJet")
-        self.out.branch("FatJet_Stop0l",   "O", lenVar="nFatJet")
         self.out.branch("Photon_Stop0l",   "O", lenVar="nPhoton")
-        self.out.branch("Jet_dPhiMET",     "F", lenVar="nJet")
+        self.out.branch("Jet_dPhiMET",     "F", lenVar="nJet", limitedPrecision=True)
         self.out.branch("Stop0l_HT",       "F")
         self.out.branch("Stop0l_Mtb",      "F")
         self.out.branch("Stop0l_Ptb",      "F")
@@ -72,7 +76,7 @@ class Stop0lObjectsProducer(Module):
         return True
 
     def SelIsotrack(self, isk, met):
-        iso = isk.pfRelIso03_chg/isk.pt
+        iso = isk.pfRelIso03_chg
         if abs(isk.pdgId) == 11 or abs(isk.pdgId) == 13:
             if isk.pt < 5 or iso > 0.2:
                 return False
@@ -122,7 +126,8 @@ class Stop0lObjectsProducer(Module):
         if (abeta > 1.442 and abeta < 1.566) or (abeta > 2.5):
             return False
         ## cut-base ID, 2^0 loose ID
-        if not photon.cutBasedBitmap & 0b1:
+        cutbase =  photon.cutBasedBitmap  if self.era != "2016" else photon.cutBased
+        if not cutbase & 0b1:
             return False
         return True
 
