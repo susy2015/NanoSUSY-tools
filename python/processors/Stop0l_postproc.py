@@ -11,6 +11,7 @@ from PhysicsTools.NanoSUSYTools.modules.Stop0lBaselineProducer import *
 from PhysicsTools.NanoSUSYTools.modules.DeepTopProducer import *
 from PhysicsTools.NanoSUSYTools.modules.updateGenWeight import *
 from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import *
+from PhysicsTools.NanoSUSYTools.modules.LLObjectsProducer import *
 
 def main(args):
     if "False" in args.isData:
@@ -27,7 +28,8 @@ def main(args):
         #Stop0lObjectsProducer(args.era),
         #DeepTopProducer(args.era),
         #Stop0lBaselineProducer(args.era, isData=isdata, isFastSim=isfastsim),
-        #UpdateGenWeight(args.crossSection, args.nEvents)
+        #UpdateGenWeight(args.crossSection, args.nEvents),
+	LLObjectsProducer(),
     ]
 
     if args.era == "2016":
@@ -47,7 +49,8 @@ def main(args):
         files.append(line.strip())
 
 
-    p=PostProcessor(args.outputfile,files,cut=None, branchsel=None, outputbranchsel="keep_and_drop.txt", modules=mods,provenance=False)
+    #p=PostProcessor(args.outputfile,files,cut=None, branchsel=None, outputbranchsel="keep_and_drop.txt", modules=mods,provenance=False)
+    p=PostProcessor(args.outputfile,files,cut=None, branchsel=None, outputbranchsel="keep_and_drop_test.txt", modules=mods,provenance=False)
     p.run()
 
 if __name__ == "__main__":

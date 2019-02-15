@@ -18,7 +18,8 @@ DelExe    = '../Stop0l_postproc.py'
 tempdir = '/uscms_data/d3/%s/condor_temp/' % getpass.getuser()
 ShortProjectName = 'PostProcess_v1'
 argument = "--inputFiles=%s.$(Process).list "
-sendfiles = ["../keep_and_drop.txt"]
+#sendfiles = ["../keep_and_drop.txt"]
+sendfiles = ["../keep_and_drop_test.txt"]
 
 def tar_cmssw():
     print("Tarring up CMSSW, ignoring file larger than 100MB")
@@ -178,7 +179,8 @@ def my_process(args):
     for name, sample in Process.items():
 
         #define output directory
-        outdir = sample["Outpath__"]
+        if args.outputdir == "": outdir = sample["Outpath__"]
+	else:			 outdir = args.outputdir
         # outputfile = "{common_name}_$(Process).root ".format(common_name=name)
 
         #Update RunExe.csh
@@ -227,6 +229,9 @@ if __name__ == "__main__":
     parser.add_argument('-e', '--era',
         default = "2016",type=int,
         help = 'Era of the config file')
+    parser.add_argument('-o', '--outputdir',
+	default = "",
+	help = 'Path to the output directory.')
 
     args = parser.parse_args()
     my_process(args)
