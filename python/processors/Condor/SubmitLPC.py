@@ -180,7 +180,7 @@ def my_process(args):
 
         #define output directory
         if args.outputdir == "": outdir = sample["Outpath__"]
-	else:			 outdir = args.outputdir
+	else:			 outdir = args.outputdir + "/" + stripped_entry[0] + "/"
         # outputfile = "{common_name}_$(Process).root ".format(common_name=name)
 
         #Update RunExe.csh
