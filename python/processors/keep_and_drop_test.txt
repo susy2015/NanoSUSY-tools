@@ -8,7 +8,6 @@ keep *Stop0l*
 keep Pass_*
 keep *Weight*
 keep Jet_dPhiMET
-drop *GenJet*
 drop *GenPart*
 drop *GenVisTau*
 drop *LHE*

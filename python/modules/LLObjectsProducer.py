@@ -5,6 +5,7 @@ import numpy as np
 
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection, Object
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
+from PhysicsTools.NanoAODTools.postprocessing.tools import deltaPhi, deltaR, closest
 
 #2016 MC: https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation80XReReco#Data_MC_Scale_Factors_period_dep
 #2017 MC: https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation94X
@@ -12,6 +13,9 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 class LLObjectsProducer(Module):
     def __init__(self):
         self.metBranchName = "MET"
+	self.p_tauminus = 15
+	self.p_Z0       = 23
+	self.p_Wplus    = 24
 
     def beginJob(self):
         pass
@@ -58,12 +62,24 @@ class LLObjectsProducer(Module):
 		mtmuon.append(math.sqrt( 2 * met.pt * l.pt * (1 - math.cos(met.phi-l.phi))))
 	return mtele, mtmuon
 
+    def isA(self, particleID, p):
+	return abs(p) == particleID
+
+    def SelTau(self, genpart, pfc):
+	for g in genpart:
+		genPartMom = g.genPartIdxMother
+		if self.isA(self.p_tauminus, g.pdgId) and deltaR(g.eta, g.phi, pfc.eta, pfc.phi) < 0.2:# and (self.isA(self.p_Z0, genPartMom) or self.isA(self.p_Wplus, genPartMom)):
+			return True
+	return False
+
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
         ## Getting objects
+	jets	  = Collection(event, "Jet")
         electrons = Collection(event, "Electron")
         muons     = Collection(event, "Muon")
         met       = Object(event, self.metBranchName)
+	genpart   = Collection(event, "GenPart")
 
         ## Selecting objects
         self.Electron_Stop0l = map(self.SelEle, electrons)
@@ -71,13 +87,13 @@ class LLObjectsProducer(Module):
 
         ## Jet variables
 	MtEleMET, MtMuonMET = self.SelMtlepMET(electrons, muons, met)
-
+	
         ### Store output
 	self.out.fillBranch("Stop0l_MtEleMET",  MtEleMET)
 	self.out.fillBranch("Stop0l_MtMuonMET", MtMuonMET)
 	self.out.fillBranch("Stop0l_nElectron",sum(self.Electron_Stop0l))
 	self.out.fillBranch("Stop0l_nMuon",    sum(self.Muon_Stop0l))
-        return True
+	return True
 
 
  # define modules using the syntax 'name = lambda : constructor' to avoid having them loaded when not needed

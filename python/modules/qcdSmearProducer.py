@@ -19,13 +19,34 @@ class qcdSmearProducer(Module):
         self.xBinWidth = 0.01
         self.minWindow = 0.01
         self.maxWindow = 0.5
-        self.nSmears = 2
+        self.nSmears = 100
         self.nSmearJets = 2
         self.nBootstraps = 50
         self.doFlatSampling = True
         self.respInputName = "JetResByFlav"
         self.respFileName = "file:/eos/uscms/store/user/ddash/qcd_smeared/resTailOut_combined_filtered_CHEF_puWeight_weight_WoH_NORMALIZED.root"
-	self.outFileName = "Smear_tree_"
+	self.outFileName = "Smear_tree.root"
+
+    def beginJob(self,histFile=None,histDirName=None):
+        pass
+
+    def endJob(self):
+        pass 
+
+    def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree, outputFileSmear, outputTreeSmear):
+	self.out = wrappedOutputTree
+	self.outsmear = outputTreeSmear
+	self.out.branch("nBootstrapWeight",        "I")
+	self.out.branch("bootstrapWeight",         "I", lenVar="nBootstrapWeight")
+	self.outsmear.branch("Jet_pt", "F", lenVar="nJet")
+	self.outsmear.branch("Jet_eta", "F", lenVar="nJet")
+	self.outsmear.branch("Jet_phi", "F", lenVar="nJet")
+	self.outsmear.branch("Jet_mass", "F", lenVar="nJet")
+	self.outsmear.branch("MET_pt", "F")
+	self.outsmear.branch("MET_phi", "F")
+	self.outsmear.branch("genWeight", "F")
+	self.outsmear.branch("nBootstrapWeight",        "I")
+	self.outsmear.branch("bootstrapWeight",         "I", lenVar="nBootstrapWeight")
 
     def loadHisto(self,filename,hname):
 	tf = ROOT.TFile.Open(filename)
@@ -34,42 +55,6 @@ class qcdSmearProducer(Module):
 	tf.Close()
 	return hist
 
-    def storeSmearFile(self, outFileName, inTree, Jet_pt, Jet_eta, Jet_phi, Jet_mass, MET, weight, b):
-	outFile = ROOT.TFile.Open(outFileName, "recreate")
-	inTree.SetBranchStatus("Jet_pt", 0)
-	inTree.SetBranchStatus("Jet_eta", 0)
-	inTree.SetBranchStatus("Jet_phi", 0)
-	inTree.SetBranchStatus("Jet_mass", 0)
-	inTree.SetBranchStatus("MET_pt", 0)
-	inTree.SetBranchStatus("MET_phi", 0)
-	inTree.SetBranchStatus("genWeight", 0)
-	outTree = inTree.CloneTree(0)
-	jetpt = array( 'f', Jet_pt )
-	outTree.Branch('Jet_pt', jetpt, 'Jet_pt/F')
-	jeteta = array( 'f', Jet_eta )
-	outTree.Branch('Jet_eta', jeteta, 'Jet_eta/F')
-	jetphi = array( 'f', Jet_phi )
-	outTree.Branch('Jet_phi', jetphi, 'Jet_phi/F')
-	jetmass = array( 'f', Jet_mass )
-	outTree.Branch('Jet_mass', jetmass, 'Jet_mass/F')
-	metpt = array( 'f', [MET.Pt()] )
-	outTree.Branch('MET_pt', metpt, 'MET_pt/F')
-	metphi = array( 'f', [MET.Phi()] )
-	outTree.Branch('MET_phi', metphi, 'MET_phi/F')
-	genWeight = array( 'f', [weight] )
-	outTree.Branch('genWeight', genWeight, 'genWeight/F')
-	bootstrap = array( 'i', b )
-	outTree.Branch('bootstrapWeight', bootstrap, 'bootstrapWeight/I')
-	outTree.Fill()
-	outTree.Write()
-	inTree.SetBranchStatus("Jet_pt", 1)
-	inTree.SetBranchStatus("Jet_eta", 1)
-	inTree.SetBranchStatus("Jet_phi", 1)
-	inTree.SetBranchStatus("Jet_mass", 1)
-	inTree.SetBranchStatus("MET_pt", 1)
-	inTree.SetBranchStatus("MET_phi", 1)
-	inTree.SetBranchStatus("genWeight", 1)
-	
     def ptmapping(self,jets):
 	ptrange = [0, 50, 75, 100, 125, 150, 200, 250, 300, 400, 500, 700, 1000, 1500]	
         pt_index = -1
@@ -84,19 +69,6 @@ class qcdSmearProducer(Module):
 		return bname[pt_index]
         else :
 		return lgtname[pt_index]
-
-    def beginJob(self,histFile=None,histDirName=None):
-        pass
-
-    def endJob(self):
-        pass 
-
-    def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
-        self.out = wrappedOutputTree
-	#self.out.branch("bootstrapWeight",         "I")
-
-    def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
-        pass
 
     def jetResFunction(self, jets, genjets):
         res = jets.pt/genjets.pt
@@ -202,7 +174,7 @@ class qcdSmearProducer(Module):
         tot = v1-v2
         return tot
     
-    def analyze(self, event, inTree):
+    def analyze(self, event):
         jets      = Collection(event, "Jet")
         genjets   = Collection(event, "GenJet")
         met       = Object(event,     self.metBranchName)
@@ -222,8 +194,6 @@ class qcdSmearProducer(Module):
         #begin smearing
         smearWeight = 1
 	SmearJets = []
-        eventList = []
-	eventList.append(event)
 	for iJ in xrange(len(genjets)) :
 		if iJ == self.nSmearJets: break
 		gJ = genjets[iJ]
@@ -256,7 +226,7 @@ class qcdSmearProducer(Module):
 		respHistoName = self.ptmapping(jets[rJI])
 		targeth = self.loadHisto(self.respFileName,respHistoName)
 		cdf = targeth.GetBinContent(int(origRes_/self.xBinWidth))
-		print "CDF", cdf
+		#print "CDF", cdf
 		minProb, maxProb, minRes, maxRes = self.getScaledWindowAndProb(targeth,origRes_,self.minWindow,self.maxWindow)
 		if minProb - maxProb == 0 : continue
 		
@@ -277,7 +247,6 @@ class qcdSmearProducer(Module):
 		recoJets_eta = []
 		recoJets_phi = []
 		recoJets_mass = []
-		originalRecoJets_pt = []
 		for iJ in xrange(self.nSmearJets) :
 			info = SmearJets[iJ]
 			newResValue = 1
@@ -320,7 +289,6 @@ class qcdSmearProducer(Module):
 				jet_buff = ROOT.TLorentzVector()
 				jet_buff.SetPtEtaPhiM(originalRecoJets[j].pt, originalRecoJets[j].eta, originalRecoJets[j].phi, originalRecoJets[j].mass)
 				recoJets.append(jet_buff)
-			#originalRecoJets_pt.append(originalRecoJets[j].pt)
 
 		if canSmear :
 			recoJets.sort(key = lambda j : j.Pt(), reverse = True)
@@ -331,7 +299,16 @@ class qcdSmearProducer(Module):
 				recoJets_mass.append(recoJets[j].M())
 			smearWeight /= float(self.nSmears)
 			weight *= smearWeight
-			self.storeSmearFile(self.outFileName + str(eventNum) + "_" + str(iS) + ".root", inTree, recoJets_pt, recoJets_eta, recoJets_phi, recoJets_mass, met, weight, b)
+			self.outsmear.fillBranch("Jet_pt", recoJets_pt)
+			self.outsmear.fillBranch("Jet_eta", recoJets_eta)
+			self.outsmear.fillBranch("Jet_phi", recoJets_phi)
+			self.outsmear.fillBranch("Jet_mass", recoJets_mass)
+			self.outsmear.fillBranch("MET_pt", met.Pt())
+			self.outsmear.fillBranch("MET_phi", met.Phi())
+			self.outsmear.fillBranch("genWeight", weight)
+			self.outsmear.fillBranch("nBootstrapWeight", self.nBootstraps)
+			self.outsmear.fillBranch("bootstrapWeight", b)
+			self.outsmear.fill()
 
 		smearWeight = 1.0
 		weight = originalWeight
@@ -339,5 +316,6 @@ class qcdSmearProducer(Module):
 		met = originalMET
 		jets = originalRecoJets
 
-	#self.out.fillBranch("bootstrapWeight",         b)
+	self.out.fillBranch("nBootstrapWeight",        self.nBootstraps)
+	self.out.fillBranch("bootstrapWeight",         b)
         return True    
