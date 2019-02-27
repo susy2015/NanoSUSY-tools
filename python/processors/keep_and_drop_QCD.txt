@@ -1,5 +1,2 @@
 # this is a comment
-drop * # start with all
 keep *
-#drop HLT*
-#drop Flag*

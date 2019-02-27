@@ -32,5 +32,6 @@ mods = [
 #files=["root://cmseos.fnal.gov//store/user/benwu/Stop18/NtupleSyncMiniAOD/NanoSUSY/2018Xmas/prod2017MC_NANO.root"]
 files=["/eos/uscms/store/user/mkilpatr/13TeV/tauMVA/prod2017MC_NANO_Skim.root"]
 #p=PostProcessor(".",files,cut=None, branchsel=None, outputbranchsel="keep_and_drop_QCD.txt", outputbranchselsmear="keep_and_drop_smear.txt",modules=mods,provenance=False)
-p=PostProcessor(".",files,cut=None, branchsel=None, outputbranchsel="keep_and_drop_QCD.txt", outputbranchselsmear="keep_and_drop_test.txt",modules=mods,provenance=False)
+#p=PostProcessor(".",files,cut=None, branchsel=None, outputbranchsel="keep_and_drop_QCD.txt", outputbranchselsmear="keep_and_drop_res.txt",modules=mods,provenance=False)
+p=PostProcessor(".",files,cut=None, branchsel=None, outputbranchsel="keep_and_drop_QCD.txt", outputbranchselsmear="keep_and_drop_tauMVA.txt",modules=mods,provenance=False)
 p.run()
