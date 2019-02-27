@@ -15,21 +15,22 @@ from PhysicsTools.NanoSUSYTools.modules.JetResSkim import *
 
 
 mods = [
-    qcdSmearProducer(),
+    #qcdSmearProducer(),
     #eleMiniCutID(),
     #Stop0lObjectsProducer("2017"),
     #DeepTopProducer("2017"),
     #Stop0lBaselineProducer("2017", isData=False, isFastSim=False),
     #UpdateGenWeight(args.crossSection, args.nEvents),
     #LLObjectsProducer(),
-    #TauMVAObjectsProducer(),
+    TauMVAObjectsProducer(),
     #JetResSkim(),
 ]
 
 #files=["/uscms/home/mkilpatr/nobackup/CMSSW_9_4_10/src/AnalysisMethods/macros/run/plots_19_01_30_smear/prod2017MC_NANO_Skim_original.root"]
 #files=["/eos/uscms/store/user/lpcsusyhad/Stop_production/Summer16_80X_v2_NanAOD_MC/PostProcess_v1/TTbar_HT-600to800/TTbar_HT-600to800_0.root"]
-files=["/uscms_data/d3/lpcsusyhad/benwu/Moriond2019/TestNanoAOD/CMSSW_10_4_X_2018-12-11-2300/src/prod2017MC_NANO.root"]
+#files=["/uscms_data/d3/lpcsusyhad/benwu/Moriond2019/TestNanoAOD/CMSSW_10_4_X_2018-12-11-2300/src/prod2017MC_NANO.root"]
 #files=["root://cmseos.fnal.gov//store/user/benwu/Stop18/NtupleSyncMiniAOD/NanoSUSY/2018Xmas/prod2017MC_NANO.root"]
-#files=["/eos/uscms/store/user/mkilpatr/13TeV/tauMVA/prod2017MC_NANO_Skim.root"]
-p=PostProcessor(".",files,cut=None, branchsel=None, outputbranchsel="keep_and_drop_QCD.txt", outputbranchselsmear="keep_and_drop_smear.txt",modules=mods,provenance=False)
+files=["/eos/uscms/store/user/mkilpatr/13TeV/tauMVA/prod2017MC_NANO_Skim.root"]
+#p=PostProcessor(".",files,cut=None, branchsel=None, outputbranchsel="keep_and_drop_QCD.txt", outputbranchselsmear="keep_and_drop_smear.txt",modules=mods,provenance=False)
+p=PostProcessor(".",files,cut=None, branchsel=None, outputbranchsel="keep_and_drop_QCD.txt", outputbranchselsmear="keep_and_drop_test.txt",modules=mods,provenance=False)
 p.run()

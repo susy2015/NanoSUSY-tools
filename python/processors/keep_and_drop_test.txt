@@ -1,18 +1,6 @@
 # this is a comment
-drop *_*
-keep *_pt
-keep *_phi
-keep *_eta
-keep *_mass
-keep *Stop0l*
-keep Pass_*
-keep *Weight*
-keep Jet_dPhiMET
-drop *GenPart*
-drop *GenVisTau*
-drop *LHE*
-drop *Photon*
-drop *SubJet*
-drop *isoTrk*
-drop *SB*
-drop *HOT*
+drop *
+keep Pass_MET
+keep Pass_Baseline
+keep genWeight
+keep nJet
