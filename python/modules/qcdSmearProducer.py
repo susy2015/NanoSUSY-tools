@@ -19,7 +19,7 @@ class qcdSmearProducer(Module):
         self.xBinWidth = 0.01
         self.minWindow = 0.01
         self.maxWindow = 0.5
-        self.nSmears = 1
+        self.nSmears = 100
         self.nSmearJets = 2
         self.nBootstraps = 50
         self.doFlatSampling = True
