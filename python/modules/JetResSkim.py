@@ -21,23 +21,22 @@ class JetResSkim(Module):
         pass
     def endjob(self):
         pass
-    def beginFile(self,inputFile,outputFile,inputTree,wrappedOutputTree, outputFileSkim, outputTreeSkim):
+    def beginFile(self,inputFile,outputFile,inputTree,wrappedOutputTree):
 	self.out = wrappedOutputTree
-	self.outSkim = outputTreeSkim
-	self.outSkim.branch("weight"	,"F")
-	self.outSkim.branch("genjetpt"	,"F")
-	self.outSkim.branch("genjeteta"	,"F")
-	self.outSkim.branch("recojetpt"	,"F")
-	self.outSkim.branch("genjetrank"	,"I")
-	self.outSkim.branch("flavour"	,"I")
-	self.outSkim.branch("rechempt"	,"F")
-	self.outSkim.branch("genhempt"	,"F")
+	self.out.branch("weight"	,"F")
+	self.out.branch("genjetpt"	,"F")
+	self.out.branch("genjeteta"	,"F")
+	self.out.branch("recojetpt"	,"F")
+	self.out.branch("genjetrank"	,"I")
+	self.out.branch("flavor"	,"I")
+	self.out.branch("rechempt"	,"F")
+	self.out.branch("genhempt"	,"F")
 
     def analyze(self, event):
-	jets      = Collection(event, "Jet")
-	genjets   = Collection(event, "GenJet")
-	weight    = event.genWeight
-	eventNum  = event.event
+	jets        = Collection(event, "Jet")
+	genjets     = Collection(event, "GenJet")
+	weight      = event.Stop0l_evtWeight
+	eventNum    = event.event
 	PassFilter  = event.Pass_EventFilter
 	PassJetID   = event.Pass_JetID
 
@@ -52,24 +51,24 @@ class JetResSkim(Module):
 				rJet = jets[iR]
 				break
 			
-			self.outSkim.fillBranch("weight",	weight)
-			self.outSkim.fillBranch("genjetpt", 	gJet.pt)
-			self.outSkim.fillBranch("genjeteta", 	gJet.eta)
-			self.outSkim.fillBranch("recojetpt", 	rJet.pt if rJet != 0 else 9.5)
-			self.outSkim.fillBranch("genjetrank", 	min(gJ, 250))
-			self.outSkim.fillBranch("flavour",	gJet.partonFlavour)
+			self.out.fillBranch("weight",	weight)
+			self.out.fillBranch("genjetpt", 	gJet.pt)
+			self.out.fillBranch("genjeteta", 	gJet.eta)
+			self.out.fillBranch("recojetpt", 	rJet.pt if rJet != 0 else 9.5)
+			self.out.fillBranch("genjetrank", 	min(gJ, 250))
+			self.out.fillBranch("flavor",	gJet.partonFlavour)
 		
 			if(gJet.eta > -2.8 and gJet.eta < -1.6 and gJet.phi >-1.37 and gJet.phi < -1.07):
-				self.outSkim.fillBranch("genhempt", gJet.pt)
+				self.out.fillBranch("genhempt", gJet.pt)
 			else:
-				self.outSkim.fillBranch("genhempt", 0)
+				self.out.fillBranch("genhempt", 0)
 			if rJet != 0:
 				if(rJet.eta > -2.8 and rJet.eta < -1.6 and rJet.phi >-1.37 and rJet.phi < -1.07): 
-					self.outSkim.fillBranch("rechempt",rJet.pt)
+					self.out.fillBranch("rechempt",rJet.pt)
 				else:
-					self.outSkim.fillBranch("rechempt", 0)
+					self.out.fillBranch("rechempt", 0)
 			else:
-				self.outSkim.fillBranch("rechempt", 0)
+				self.out.fillBranch("rechempt", 0)
 
-			self.outSkim.fill()	
+			self.out.fill()	
 	return True  

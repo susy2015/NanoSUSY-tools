@@ -12,6 +12,7 @@ from PhysicsTools.NanoSUSYTools.modules.DeepTopProducer import *
 from PhysicsTools.NanoSUSYTools.modules.updateGenWeight import *
 from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import *
 from PhysicsTools.NanoSUSYTools.modules.LLObjectsProducer import *
+from PhysicsTools.NanoSUSYTools.modules.JetResSkim import *
 
 def main(args):
     if "False" in args.isData:
@@ -29,7 +30,8 @@ def main(args):
         #DeepTopProducer(args.era),
         #Stop0lBaselineProducer(args.era, isData=isdata, isFastSim=isfastsim),
         #UpdateGenWeight(args.crossSection, args.nEvents),
-	LLObjectsProducer(),
+	#LLObjectsProducer(),
+	JetResSkim(),
     ]
 
     if args.era == "2016":
@@ -50,7 +52,8 @@ def main(args):
 
 
     #p=PostProcessor(args.outputfile,files,cut=None, branchsel=None, outputbranchsel="keep_and_drop.txt", modules=mods,provenance=False)
-    p=PostProcessor(args.outputfile,files,cut="MET_pt > 100 & Stop0l_nJets >= 2", branchsel=None, outputbranchsel="keep_and_drop_test.txt", modules=mods,provenance=False)
+    p=PostProcessor(".",files,cut=None, branchsel=None, outputbranchsel="keep_and_drop_QCD.txt", outputbranchselsmear="keep_and_drop_res.txt",modules=mods,provenance=False)
+    #p=PostProcessor(args.outputfile,files,cut="MET_pt > 100 & Stop0l_nJets >= 2", branchsel=None, outputbranchsel="keep_and_drop_test.txt", modules=mods,provenance=False)
     p.run()
 
 if __name__ == "__main__":
