@@ -15,14 +15,14 @@ from PhysicsTools.NanoSUSYTools.modules.JetResSkim import *
 
 
 mods = [
-    #qcdSmearProducer(),
+    qcdSmearProducer(),
     #eleMiniCutID(),
     #Stop0lObjectsProducer("2017"),
     #DeepTopProducer("2017"),
     #Stop0lBaselineProducer("2017", isData=False, isFastSim=False),
     #UpdateGenWeight(args.crossSection, args.nEvents),
     #LLObjectsProducer(),
-    TauMVAObjectsProducer(),
+    #TauMVAObjectsProducer(),
     #JetResSkim(),
 ]
 
@@ -30,8 +30,9 @@ mods = [
 #files=["/eos/uscms/store/user/lpcsusyhad/Stop_production/Summer16_80X_v2_NanAOD_MC/PostProcess_v1/TTbar_HT-600to800/TTbar_HT-600to800_0.root"]
 #files=["/uscms_data/d3/lpcsusyhad/benwu/Moriond2019/TestNanoAOD/CMSSW_10_4_X_2018-12-11-2300/src/prod2017MC_NANO.root"]
 #files=["root://cmseos.fnal.gov//store/user/benwu/Stop18/NtupleSyncMiniAOD/NanoSUSY/2018Xmas/prod2017MC_NANO.root"]
-files=["/eos/uscms/store/user/mkilpatr/13TeV/tauMVA/prod2017MC_NANO_Skim.root"]
-#p=PostProcessor(".",files,cut=None, branchsel=None, outputbranchsel="keep_and_drop_QCD.txt", outputbranchselsmear="keep_and_drop_smear.txt",modules=mods,provenance=False)
+#files=["/eos/uscms/store/user/mkilpatr/13TeV/tauMVA/prod2017MC_NANO_Skim.root"]
+files=["/eos/uscms/store/user/lpcsusyhad/Stop_production/Summer16_80X_v2_NanAOD_MC/QCD_HT100to200_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/2016_MC_RunIISummer16MiniAODv2-PUMoriond17_80X_v6-v1/190124_025835/0000/prod2016MC_NANO_150.root"]
+p=PostProcessor(".",files,cut=None, branchsel=None, outputbranchsel="keep_and_drop_QCD.txt", outputbranchselsmear="keep_and_drop_smear.txt",modules=mods,provenance=False)
 #p=PostProcessor(".",files,cut=None, branchsel=None, outputbranchsel="keep_and_drop_QCD.txt", outputbranchselsmear="keep_and_drop_res.txt",modules=mods,provenance=False)
-p=PostProcessor(".",files,cut=None, branchsel=None, outputbranchsel="keep_and_drop_QCD.txt", outputbranchselsmear="keep_and_drop_tauMVA.txt",modules=mods,provenance=False)
+#p=PostProcessor(".",files,cut=None, branchsel=None, outputbranchsel="keep_and_drop_QCD.txt", outputbranchselsmear="keep_and_drop_tauMVA.txt",modules=mods,provenance=False)
 p.run()

@@ -55,23 +55,31 @@ class qcdSmearProducer(Module):
 	tf.Close()
 	return hist
 
-    def ptmapping(self,jets):
+    def ptmapping(self, recojet, vecKind):
 	ptrange = [0, 50, 75, 100, 125, 150, 200, 250, 300, 400, 500, 700, 1000, 1500]	
         pt_index = -1
+	if vecKind : 
+		jetpt = recojet.Pt()
+	else:        
+		jetpt = recojet.pt
 	for i in xrange(len(ptrange)):
-		if jets.pt < float(ptrange[i]): 
+		if jetpt < float(ptrange[i]): 
 			pt_index = i - 1
 			break
 	
 	bname=["res_b_comp_14","res_b_comp_15","res_b_comp_16","res_b_comp_17","res_b_comp_18","res_b_comp_19","res_b_comp_20","res_b_comp_21","res_b_comp_22","res_b_comp_23","res_b_comp_24","res_b_comp_25","res_b_comp_26"]
         lgtname=["res_light_comp_1","res_light_comp_2","res_light_comp_3","res_light_comp_4","res_light_comp_5","res_light_comp_6","res_light_comp_7","res_light_comp_8","res_light_comp_9","res_light_comp_10","res_light_comp_11","res_light_comp_12","res_light_comp_13"]
-        if jets.partonFlavour == 4 :
-		return bname[pt_index]
-        else :
+        if vecKind :
 		return lgtname[pt_index]
+	else:
+		if recojet.partonFlavour == 4 :
+			return bname[pt_index]
+        	else :
+			return lgtname[pt_index]
 
-    def jetResFunction(self, jets, genjets):
-        res = jets.pt/genjets.pt
+    def jetResFunction(self, jets, genjets, vecKind):
+	if vecKind : res = jets.Pt()/genjets.pt
+	else:	     res = jets.pt/genjets.pt
         return res
 
     def interpolateResToProb(self,cdf,resp):
@@ -126,7 +134,9 @@ class qcdSmearProducer(Module):
     def getScaledWindowAndProb(self,cdf,resp,minWindow,maxWindow):
         window = self.getScaledWindow(resp,minWindow,maxWindow)
         minRes = resp - window
-        maxRes = resp + window
+        if minRes < 0: minRes = 0
+	maxRes = resp + window
+	if maxRes > 2: maxRes = 2
 	minProb, maxProb = self.getWindowProb(cdf,minRes,maxRes)
         return minProb, maxProb, minRes, maxRes
 
@@ -147,22 +157,9 @@ class qcdSmearProducer(Module):
 	tot = (v1 + (v2 - v3))
 	return tot
     
-    def addFourVector(self,obj1,obj2):
-        tot = ROOT.TLorentzVector()
-        v1 = ROOT.TLorentzVector()
-        v2 = ROOT.TLorentzVector()
-        v1.SetPtEtaPhiM(obj1.pt, 0, obj1.phi, 0)
-        v2.SetPtEtaPhiM(obj2.pt, 0, obj2.phi, 0)
-        tot = v1+v2
-        return tot
-    
     def addTLorentzVector(self,obj1,obj2):
         tot = ROOT.TLorentzVector()
-        v1 = ROOT.TLorentzVector()
-        v2 = ROOT.TLorentzVector()
-        v1.SetPtEtaPhiM(obj1.Pt(), 0, obj1.Phi(), 0)
-        v2.SetPtEtaPhiM(obj2.pt, 0, obj2.phi, 0)
-        tot = v1+v2
+        tot = obj1 + obj2
         return tot
     
     def subFourVector(self,obj1,obj2):
@@ -214,34 +211,40 @@ class qcdSmearProducer(Module):
 		if deltamet > met.pt + 100 and deltamet > 0.55 *gJ.pt: continue
 		
 		recoJet = jets[rJI]
+		vecKind = False
 		if rJI < 0 :
 			rJI = len(jets)
 			n1=ROOT.TLorentzVector()
-			newjet = [n1.SetPtEtaPhiM(9.5,gJ.eta,gJ.phi,gJ.mass),-1,0,9.5,0,gJ.pt]
-			recoJet = newjet
-		
-		origRes_ = self.jetResFunction(recoJet, gJ)
+			#newjet = [n1.SetPtEtaPhiM(9.5,gJ.eta,gJ.phi,gJ.mass),-1,0,9.5,0,gJ.pt]
+			n1.SetPtEtaPhiM(9.5,gJ.eta,gJ.phi,gJ.mass)
+			recoJet = n1
+			vecKind = True
+
+		origRes_ = self.jetResFunction(recoJet, gJ, vecKind)
 		if origRes_ < 0 or origRes_ > 2 : continue
 		
-		respHistoName = self.ptmapping(jets[rJI])
+		respHistoName = self.ptmapping(recoJet, vecKind)
 		targeth = self.loadHisto(self.respFileName,respHistoName)
 		cdf = targeth.GetBinContent(int(origRes_/self.xBinWidth))
 		#print "CDF", cdf
 		minProb, maxProb, minRes, maxRes = self.getScaledWindowAndProb(targeth,origRes_,self.minWindow,self.maxWindow)
 		if minProb - maxProb == 0 : continue
-		
-		SmearJets_buff = [gJ,recoJet,targeth,minProb,maxProb,minRes,maxRes] 
+
+		recoJetLVec = ROOT.TLorentzVector()	
+		if vecKind:  recoJetLVec = recoJet
+		else:        recoJetLVec.SetPtEtaPhiM(recoJet.pt, recoJet.eta, recoJet.phi, recoJet.mass)
+		SmearJets_buff = [gJ,recoJetLVec,targeth,minProb,maxProb,minRes,maxRes] 
 		SmearJets.append(SmearJets_buff)
 
-        if len(SmearJets) == 0: return True
+        if len(SmearJets) != 2: return True
 
         originalRecoJets = jets
         originalMET = met
         originalWeight = weight
 	canSmear = False
 	SmearedJets = []
-
         for iS in xrange(self.nSmears) :
+		
 		recoJets = []
 		recoJets_pt = []
 		recoJets_eta = []
@@ -264,7 +267,7 @@ class qcdSmearProducer(Module):
 			smearingCorr = 1
 			if self.doFlatSampling:
 				deltaMinRes = newResValue - 0.001
-				deltaMaxRes = newResValue + 0.001 
+				deltaMaxRes = newResValue + 0.001
 				deltaMinProb, deltaMaxProb = self.getWindowProb(info[2], deltaMinRes, deltaMaxRes)
 				flatProb = (deltaMaxRes - deltaMinRes)/ (info[6] - info[5])
 				trueProb = deltaMaxProb - deltaMinProb
@@ -274,11 +277,14 @@ class qcdSmearProducer(Module):
 
 			smearWeight *= smearingCorr / contribProb
 			recoJet = info[1]
-	
-			if iJ == 0 : met = self.addFourVector(met, recoJet)
-			else:        met = self.addTLorentzVector(met, recoJet)
+
+			if iJ == 0:
+				metLVec = ROOT.TLorentzVector()
+				metLVec.SetPtEtaPhiM(met.pt, 0, met.phi, 0)
+				met = self.addTLorentzVector(metLVec, recoJet)
+			else:   met = self.addTLorentzVector(met, recoJet)
 			newp4 = ROOT.TLorentzVector()
-			newp4.SetPtEtaPhiM(newResValue * info[0].pt,recoJet.eta,recoJet.phi,recoJet.mass)
+			newp4.SetPtEtaPhiM(newResValue * info[0].pt,recoJet.Eta(),recoJet.Phi(),recoJet.M())
 			recoJets.append(newp4)
 			met -= newp4
 
