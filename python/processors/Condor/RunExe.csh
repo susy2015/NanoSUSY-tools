@@ -36,13 +36,18 @@ endif
 echo $EXE $argv
 python $EXE $argv
 
+set filename = "`echo $argv | sed 's/--inputfile=//'`"
+set filename = "`echo $filename | sed 's/ --era=.*//'`"
+set filename = "`echo $filename | sed 's/list/root/'`"
+
 if ($? == 0) then
   foreach tarfile (`ls *gz FileList/*gz`)
     tar -tf $tarfile  | xargs rm -r
   end
+  rm *Skim.root
   foreach outfile (`ls *root`)
     echo "Copying ${outfile} to ${OUTPUT}"
-    xrdcp $outfile "root://cmseos.fnal.gov/${OUTPUT}"
+    xrdcp $outfile "root://cmseos.fnal.gov/${OUTPUT}/${filename}"
     if ($? == 0) then
       rm $outfile
     endif
