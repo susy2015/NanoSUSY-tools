@@ -8,20 +8,27 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
 #2016 MC: https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation80XReReco#Data_MC_Scale_Factors_period_dep
 #2017 MC: https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation94X
+#2018 MC: https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation102X
 DeepCSVMediumWP ={
     "2016" : 0.6324,
     "2017" : 0.4941,
+    "2018" : 0.4184
 }
 
 CSVv2MediumWP = {
     "2016" : 0.8484,
-    "2017" : 0.8838
+    "2017" : 0.8838,
+    "2018" : 0.8838  # Not recommended, use 2017 as temp
 }
 
 class Stop0lObjectsProducer(Module):
     def __init__(self, era):
         self.era = era
         self.metBranchName = "MET"
+        # EE noise mitigation in PF MET
+        # https://hypernews.cern.ch/HyperNews/CMS/get/JetMET/1865.html
+        if self.era == "2017":
+            self.metBranchName = "METFixEE2017"
 
     def beginJob(self):
         pass
@@ -46,17 +53,19 @@ class Stop0lObjectsProducer(Module):
         self.out.branch("Stop0l_nJets",    "I")
         self.out.branch("Stop0l_nbtags",   "I")
         self.out.branch("Stop0l_nSoftb",   "I")
-	self.out.branch("Stop0l_MtEleMET", "F", lenVar="nElectron")
-	self.out.branch("Stop0l_MtMuonMET", "F", lenVar="nMuon")
-	self.out.branch("Stop0l_nElectron","I")
-	self.out.branch("Stop0l_nMuon",    "I")
+        # Copying METFixEE2017 to MET for 2017 Data/MC
+        if self.era == "2017":
+            self.out.branch("MET_phi",                  "F")
+            self.out.branch("MET_pt",                   "F")
+            self.out.branch("MET_sumEt",                "F")
+            self.out.branch("MET_MetUnclustEnUpDeltaX", "F")
+            self.out.branch("MET_MetUnclustEnUpDeltaY", "F")
 
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         pass
 
 
     def SelEle(self, ele):
-	#print "ele pt: %d, ele eta: %d", ele.pt, ele.eta
         if math.fabs(ele.eta) > 2.5 or ele.pt < 5:
             return False
         ## Veto ID electron
@@ -88,15 +97,6 @@ class Stop0lObjectsProducer(Module):
         if mtW  > 100:
             return False
         return True
-
-    def SelMtlepMET(self, ele, muon, met):
-	mtEle = []
-	mtMuon = []
-	for l in ele:
-		mtEle.append(math.sqrt( 2 * met.pt * l.pt * (1 - math.cos(met.phi-l.phi))))
-	for l in muon:
-		mtMuon.append(math.sqrt( 2 * met.pt * l.pt * (1 - math.cos(met.phi-l.phi))))
-	return mtEle, mtMuon
 
     def SelBtagJets(self, jet):
         global DeepCSVMediumWP
@@ -157,6 +157,16 @@ class Stop0lObjectsProducer(Module):
             Mtb = 0
         return Mtb, Ptb
 
+    def CopyMETFixEE2017(self, METFixEE):
+        self.out.fillBranch("MET_phi", METFixEE.phi)
+        self.out.fillBranch("MET_pt", METFixEE.pt)
+        self.out.fillBranch("MET_sumEt", METFixEE.sumEt)
+        self.out.fillBranch("MET_MetUnclustEnUpDeltaX", METFixEE.MetUnclustEnUpDeltaX)
+        self.out.fillBranch("MET_MetUnclustEnUpDeltaY", METFixEE.MetUnclustEnUpDeltaY)
+        return True
+
+
+
 
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
@@ -189,9 +199,10 @@ class Stop0lObjectsProducer(Module):
         ## TODO: Need to improve speed
         HT = self.CalHT(jets)
         Mtb, Ptb = self.CalMTbPTb(jets, met)
-	MtEleMET, MtMuonMET = self.SelMtlepMET(electrons, muons, met)
 
         ### Store output
+        if self.era == "2017":
+            self.CopyMETFixEE2017(met)
         self.out.fillBranch("Electron_Stop0l", self.Electron_Stop0l)
         self.out.fillBranch("Muon_Stop0l",     self.Muon_Stop0l)
         self.out.fillBranch("IsoTrack_Stop0l", self.IsoTrack_Stop0l)
@@ -207,10 +218,6 @@ class Stop0lObjectsProducer(Module):
         self.out.fillBranch("Stop0l_nbtags",   sum(self.BJet_Stop0l))
         self.out.fillBranch("Stop0l_nSoftb",   sum(self.SB_Stop0l))
         self.out.fillBranch("Stop0l_METSig",   met.pt / math.sqrt(HT) if HT > 0 else 0)
-	self.out.fillBranch("Stop0l_MtEleMET", MtEleMET)
-	self.out.fillBranch("Stop0l_MtMuonMET",MtMuonMET)
-	self.out.fillBranch("Stop0l_nElectron",sum(self.Electron_Stop0l))
-	self.out.fillBranch("Stop0l_nMuon",    sum(self.Muon_Stop0l))
         return True
 
 

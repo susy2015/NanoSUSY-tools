@@ -38,8 +38,7 @@ class Stop0lBaselineProducer(Module):
         countEle = sum([e.Stop0l for e in eles])
         countMu  = sum([m.Stop0l for m in muons])
         countIsk = sum([i.Stop0l for i in isks])
-        #return (countEle + countMu + countIsk == 0)
-        return (countEle + countMu == 0)
+        return (countEle + countMu + countIsk == 0)
 
 
     def PassEventFilter(self, flags):
@@ -67,7 +66,6 @@ class Stop0lBaselineProducer(Module):
                     and flags.BadPFMuonFilter and flags.BadChargedCandidateFilter \
                     and flags.ecalBadCalibFilter  ## Need to double check whether is outdated
             ## Only data
-            print(type(self.isData))
             if self.isData:
                 passEventFilter = passEventFilter and flags.globalSuperTightHalo2016Filter and flags.eeBadScFilter
             elif not self.isFastSim:

@@ -10,11 +10,22 @@ from PhysicsTools.NanoSUSYTools.modules.Stop0lObjectsProducer import *
 from PhysicsTools.NanoSUSYTools.modules.Stop0lBaselineProducer import *
 from PhysicsTools.NanoSUSYTools.modules.DeepTopProducer import *
 from PhysicsTools.NanoSUSYTools.modules.updateGenWeight import *
+from PhysicsTools.NanoSUSYTools.modules.lepSFProducer import *
+from PhysicsTools.NanoSUSYTools.modules.updateJetIDProducer import *
 from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import *
-from PhysicsTools.NanoSUSYTools.modules.LLObjectsProducer import *
-from PhysicsTools.NanoSUSYTools.modules.JetResSkim import *
+
+DataDepInputs = {
+    "2016" : { "pileup": "Cert271036_284044_23Sep2016ReReco_Collisions16.root"
+   },
+    "2017" : { "pileup": "Cert294927_306462_EOY2017ReReco_Collisions17.root"
+   },
+    "2018" : { "pileup": "Cert314472_325175_PromptReco_Collisions18.root"
+   }
+}
 
 def main(args):
+    # isdata = False
+    # isfastsim = False
     if "False" in args.isData:
         isdata = False
     else:
@@ -25,23 +36,21 @@ def main(args):
         isfastsim = True
 
     mods = [
-        #eleMiniCutID(),
-        #Stop0lObjectsProducer(args.era),
-        #DeepTopProducer(args.era),
-        #Stop0lBaselineProducer(args.era, isData=isdata, isFastSim=isfastsim),
-        #UpdateGenWeight(args.crossSection, args.nEvents),
-	#LLObjectsProducer(),
-	JetResSkim(),
+        eleMiniCutID(),
+        Stop0lObjectsProducer(args.era),
+        DeepTopProducer(args.era),
+        Stop0lBaselineProducer(args.era, isData=isdata, isFastSim=isfastsim),
+        UpdateGenWeight(isdata, args.crossSection, args.nEvents)
     ]
+    if args.era == "2018":
+        mods.append(UpdateJetID(args.era))
 
-    if args.era == "2016":
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ For MC ~~~~~
+    if not isdata:
+        pufile = "%s/src/PhysicsTools/NanoSUSYTools/data/pileup/%s" % (os.environ['CMSSW_BASE'], DataDepInputs[args.era]["pileup"])
         mods += [
-            puWeightProducer(pufile_mc,pufile_data,"pu_mc","pileup",verbose=False)
-        ]
-
-    if args.era == "2017":
-        mods += [
-            puWeightProducer("auto",pufile_data2017,"pu_mc","pileup",verbose=False)
+            lepSFProducer(args.era),
+            puWeightProducer("auto", pufile, "pu_mc","pileup", verbose=False)
         ]
 
 
@@ -51,9 +60,7 @@ def main(args):
         files.append(line.strip())
 
 
-    #p=PostProcessor(args.outputfile,files,cut=None, branchsel=None, outputbranchsel="keep_and_drop.txt", modules=mods,provenance=False)
-    p=PostProcessor(".",files,cut=None, branchsel=None, outputbranchsel="keep_and_drop_QCD.txt", outputbranchselsmear="keep_and_drop_res.txt",modules=mods,provenance=False)
-    #p=PostProcessor(args.outputfile,files,cut="MET_pt > 100 & Stop0l_nJets >= 2", branchsel=None, outputbranchsel="keep_and_drop_test.txt", modules=mods,provenance=False)
+    p=PostProcessor(args.outputfile,files,cut=None, branchsel=None, outputbranchsel="keep_and_drop.txt", modules=mods,provenance=False)
     p.run()
 
 if __name__ == "__main__":
