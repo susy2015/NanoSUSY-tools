@@ -24,6 +24,11 @@ foreach tarfile (`ls *gz FileList/*gz`)
   tar -xzf $tarfile 
 end
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Setup for rootpy ~~~~~
+setenv PYTHONPATH  ${_CONDOR_SCRATCH_DIR}
+setenv XDG_CONFIG_HOME ${_CONDOR_SCRATCH_DIR}/.config
+setenv XDG_CACHE_HOME ${_CONDOR_SCRATCH_DIR}/.cache
+
 if ! $?LD_LIBRARY_PATH then
     setenv LD_LIBRARY_PATH ./
 else
@@ -49,9 +54,12 @@ if ($? == 0) then
       rm $outfile
     end
   endif
-  xrdcp $argv[1] "root://cmseos.fnal.gov/${OUTPUT}/$argv[1]"
-  ## Remove output file once it is copied
-  if ($? == 0) then
-    rm $argv[1] 
-  endif
+  foreach i (1 2 3)
+    xrdcp -f $argv[1] "root://cmseos.fnal.gov/${OUTPUT}/$argv[1]"
+    ## Remove output file once it is copied
+    if ($? == 0) then
+      rm $argv[1] 
+      break
+    endif
+  end
 endif
