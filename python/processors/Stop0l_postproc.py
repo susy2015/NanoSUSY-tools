@@ -13,6 +13,7 @@ from PhysicsTools.NanoSUSYTools.modules.updateGenWeight import *
 from PhysicsTools.NanoSUSYTools.modules.lepSFProducer import *
 from PhysicsTools.NanoSUSYTools.modules.updateJetIDProducer import *
 from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import *
+from PhysicsTools.NanoSUSYTools.modules.TauMVAObjectsProducer import *
 
 DataDepInputs = {
     "2016" : { "pileup": "Cert271036_284044_23Sep2016ReReco_Collisions16.root"
@@ -36,22 +37,23 @@ def main(args):
         isfastsim = True
 
     mods = [
-        eleMiniCutID(),
-        Stop0lObjectsProducer(args.era),
-        DeepTopProducer(args.era),
-        Stop0lBaselineProducer(args.era, isData=isdata, isFastSim=isfastsim),
-        UpdateGenWeight(isdata, args.crossSection, args.nEvents)
+        #eleMiniCutID(),
+        #Stop0lObjectsProducer(args.era),
+        #DeepTopProducer(args.era),
+        #Stop0lBaselineProducer(args.era, isData=isdata, isFastSim=isfastsim),
+        #UpdateGenWeight(isdata, args.crossSection, args.nEvents)
+	TauMVAObjectsProducer(),
     ]
-    if args.era == "2018":
-        mods.append(UpdateJetID(args.era))
+    #if args.era == "2018":
+    #    mods.append(UpdateJetID(args.era))
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ For MC ~~~~~
-    if not isdata:
-        pufile = "%s/src/PhysicsTools/NanoSUSYTools/data/pileup/%s" % (os.environ['CMSSW_BASE'], DataDepInputs[args.era]["pileup"])
-        mods += [
-            lepSFProducer(args.era),
-            puWeightProducer("auto", pufile, "pu_mc","pileup", verbose=False)
-        ]
+#~~~#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ For MC ~~~~~
+    #if not isdata:
+    #    pufile = "%s/src/PhysicsTools/NanoSUSYTools/data/pileup/%s" % (os.environ['CMSSW_BASE'], DataDepInputs[args.era]["pileup"])
+    #    mods += [
+    #        lepSFProducer(args.era),
+    #        puWeightProducer("auto", pufile, "pu_mc","pileup", verbose=False)
+    #    ]
 
 
     files = []
@@ -60,7 +62,7 @@ def main(args):
         files.append(line.strip())
 
 
-    p=PostProcessor(args.outputfile,files,cut=None, branchsel=None, outputbranchsel="keep_and_drop.txt", modules=mods,provenance=False)
+    p=PostProcessor(args.outputfile,files,cut=None, branchsel=None, outputbranchsel="keep_and_drop_tauMVA.txt", modules=mods,provenance=False)
     p.run()
 
 if __name__ == "__main__":

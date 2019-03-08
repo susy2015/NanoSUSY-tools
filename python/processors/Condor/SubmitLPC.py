@@ -13,12 +13,13 @@ import argparse
 from collections import defaultdict
 
 # TODO: set OutDir (and ProjectName?) to be modified based on input filelist location
-DelExe    = '../Stop0l_postproc.py'
+#DelExe    = '../Stop0l_postproc.py'
 #OutDir = '/store/user/%s/StopStudy' %  getpass.getuser()
 tempdir = '/uscms_data/d3/%s/condor_temp/' % getpass.getuser()
 ShortProjectName = 'PostProcess_v1'
 argument = "--inputFiles=%s.$(Process).list "
-sendfiles = ["../keep_and_drop.txt"]
+#sendfiles = ["../keep_and_drop_tauMVA.txt"]
+sendfiles = ["../keep_and_drop.txt", "../keep_and_drop_res.txt"]
 #sendfiles = ["../keep_and_drop_QCD.txt", "../keep_and_drop_res.txt"]
 
 def tar_cmssw():
@@ -167,7 +168,7 @@ def my_process(args):
         Tarfiles+=npro
         NewNpro[key] = len(npro)
 
-    Tarfiles.append(os.path.abspath(DelExe))
+    Tarfiles.append(os.path.abspath(args.runfile))
     tarballname ="%s/%s.tar.gz" % (tempdir, ProjectName)
     with tarfile.open(tarballname, "w:gz", dereference=True) as tar:
         [tar.add(f, arcname=f.split('/')[-1]) for f in Tarfiles]
@@ -189,7 +190,7 @@ def my_process(args):
             for line in open("RunExe.csh","r"):
                 line = line.replace("DELSCR", os.environ['SCRAM_ARCH'])
                 line = line.replace("DELDIR", os.environ['CMSSW_VERSION'])
-                line = line.replace("DELEXE", DelExe.split('/')[-1])
+                line = line.replace("DELEXE", args.runfile.split('/')[-1])
                 line = line.replace("OUTDIR", outdir)
                 # line = line.replace("OUTFILE", outputfile)
                 outfile.write(line)
@@ -231,6 +232,9 @@ if __name__ == "__main__":
         help = 'Era of the config file')
     parser.add_argument('-o', '--outputdir',
 	default = "",
+	help = 'Path to the output directory.')
+    parser.add_argument('-f', '--runfile',
+	default = "../Stop0l_postproc.py",
 	help = 'Path to the output directory.')
 
     args = parser.parse_args()
