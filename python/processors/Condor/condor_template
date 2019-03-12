@@ -7,6 +7,7 @@ Transfer_Input_Files = TARFILES
 Output = TEMPDIR/PROJECTNAME_$(Cluster)_$(Process).stdout
 Error = TEMPDIR/PROJECTNAME_$(Cluster)_$(Process).stderr
 Log = TEMPDIR/PROJECTNAME_$(Cluster)_$(Process).log
+Request_Memory = MEMORY
 
 ARGUMENTS
 
