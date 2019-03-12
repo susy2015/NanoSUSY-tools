@@ -1,14 +1,16 @@
-mearing QCD Notes NANOAOD
+Smearing QCD Notes NANOAOD
 In PhysicsTools/NanoSUSYTools/python/processors/
 You need to create a QCD file with all of the qcd_orig files that you want to run over.
 An example of all of these files is located in my area: /uscms_data/d3/mkilpatr/CMSSW_10_2_9/src/PhysicsTools/NanoSUSYTools/python/processors
 
 > python Stop0l_postproc_res.py
 
-This file takes a long time to run. It works best to break up the commands into multiple terminals. This funtion is used to skim the root files and only save the necessary branches to run the smearing. 
+For Condor:
+> python SubmitLPC.py -f ../Stop0l_postproc_res.py -c ../../../../../StopCfg/sampleSets_postProcess_2016_QCD.cfg -o /eos/uscms/store/user/{USER}/13TeV/qcdsmearing_nanoaod
 
-> hadd jetResSkim_combined_filtered_CHEF.root QCD_HT*
-> mv jetResSkim_combined_filtered_CHEF.root /eos/uscms/store/user/{USER}/13TeV/qcdsmearing_nanoaod/.
+hadd the output files together with the name "jetResSkim_combined_filtered_CHEF_NANO.root"
+
+> mv jetResSkim_combined_filtered_CHEF_NANO.root /eos/uscms/store/user/{USER}/13TeV/qcdsmearing_nanoaod/.
 
 You need to get the jet Res for the Tail Smear
 > root -l -b -q ../rootlogon.C GetJetResForTailSmear.C+
@@ -21,6 +23,9 @@ Use JetResDiagnostic.C to create the pngs from the previous command ^
 > root -l -b -q ../../rootlogon.C JetResDiagnostic.C+
 
 > python Stop0l_postproc_QCD.py
+
+For Condor:
+> python SubmitLPC.py -f ../Stop0l_postproc_QCD.py -c ../../../../../StopCfg/sampleSets_preProcess_2016_QCD.cfg -o /eos/uscms/store/user/{USER}/13TeV/qcdsmearing_nanoaod/
 
 After QCD smearing you need to run the add weight part of the NTuples.
 You need to now create trees to run over and create the SF for the files. 
