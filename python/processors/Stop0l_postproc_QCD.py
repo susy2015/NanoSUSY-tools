@@ -29,7 +29,7 @@ def main(args):
     for line in lines:
         files.append(line.strip())
 
-    p=PostProcessor(args.outputfile,files,cut=None, branchsel=None, haddFileName=True,outputbranchsel="keep_and_drop_QCD.txt", outputbranchselsmear="keep_and_drop_smear.txt",typeofprocess="smear",modules=mods,provenance=False)
+    p=PostProcessor(args.outputfile,files,cut=None, branchsel=None, outputbranchsel="keep_and_drop_QCD.txt", outputbranchselsmear="keep_and_drop_smear.txt",typeofprocess="smear",modules=mods,provenance=False)
     p.run()
 
 if __name__ == "__main__":
