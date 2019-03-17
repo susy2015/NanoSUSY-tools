@@ -11,11 +11,13 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 DeepCSVMediumWP ={
     "2016" : 0.6324,
     "2017" : 0.4941,
+    "2018" : 0.4184
 }
 
 CSVv2MediumWP = {
     "2016" : 0.8484,
-    "2017" : 0.8838
+    "2017" : 0.8838,
+    "2018" : 0.8838  # Not recommended, use 2017 as temp
 }
 
 class Stop0lObjectsProducer(Module):

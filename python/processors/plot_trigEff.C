@@ -11,13 +11,14 @@ void plot_trigEff() {
 
 	TString year = "2016";
 	year = "2017";
+	//year = "2018";
 	TString postfix = "_loose_baseline";
-	//postfix = "_highdm";
+	postfix = "_highdm";
 	postfix = "_lowdm";
 
 	bool plot_MET = false;
-	bool plot_MET_mid = true;
-	bool plot_MET_QCD = false;
+	bool plot_MET_mid = false;
+	bool plot_MET_QCD = true;
 	bool plot_MET_QCD_compare = false;
 	bool plot_MET_mid_compare = false;
 	bool plot_Ele = false;
@@ -297,8 +298,8 @@ void plot_trigEff() {
 	}
 
 	//gStyle->SetPadTopMargin(0.08);
-	//gStyle->SetPadBottomMargin(0.12);
-	//gStyle->SetPadLeftMargin(0.15);
+	gStyle->SetPadBottomMargin(0.2);
+	gStyle->SetPadLeftMargin(0.12);
 	//gStyle->SetPadRightMargin(0.05);
 	gStyle->SetOptStat(0);
 	TH1::SetDefaultSumw2();
@@ -315,16 +316,13 @@ void plot_trigEff() {
         leg->SetBorderSize(0);
         leg->SetTextSize(0.06);
 
-	//TH2F* h_met_axis = new TH2F("h_met_axis",";E_{T}^{miss} [GeV];Efficiency of HLT_PFMET*",40,100,500,20,0,1);
-	//h_met_axis->GetYaxis()->SetTitleOffset(0.98);
-	//h_met_axis->Draw();
+	TMultiGraph *h_met_MG = new TMultiGraph();
 
 	TString infile = "results" + postfix + "/" + year + "_" + dataset + ".root";
 	TFile* f_in = new TFile(infile);
-	TH1F* h_met_denom = (TH1F*) f_in->Get("metTrigAnalyzerMiniAOD/" + refTrg);
-	TH1F* h_met_num = (TH1F*) f_in->Get("metTrigAnalyzerMiniAOD/" + sigTrg);
+	TH1F* h_met_denom = (TH1F*) f_in->Get("TrigAnalyzerMiniAOD/" + refTrg);
+	TH1F* h_met_num = (TH1F*) f_in->Get("TrigAnalyzerMiniAOD/" + sigTrg);
 
-	//TEfficiency* h_met_eff = new TEfficiency(*h_met_num, *h_met_denom);
 	TH1F* h_met_eff = (TH1F*) h_met_num->Clone();
 	h_met_eff->Sumw2();
 	h_met_eff->Divide(h_met_denom);
@@ -332,19 +330,25 @@ void plot_trigEff() {
 	h_met_eff->SetMarkerStyle(20);
 	h_met_eff->SetMarkerColor(kBlack);
 
-	//h_met_eff->GetXaxis()->SetTitle(title);
-	h_met_eff->GetYaxis()->SetTitle("Efficiency");
-	h_met_eff->GetYaxis()->SetTitleSize(0.05);
-	h_met_eff->GetYaxis()->SetTitleOffset(0.7);
-	h_met_eff->GetYaxis()->SetRangeUser(0,1);
 
-	h_met_eff->Draw("pe");
-	leg->AddEntry(h_met_eff,year + " " + dataset,"lep");
+	//h_met_eff->Draw("pe");
+	//h_met_eff->Draw("axis");
+
+	TEfficiency* h_met_TEff = new TEfficiency(*h_met_num, *h_met_denom);
+	h_met_TEff->SetLineColor(kBlack);
+	h_met_TEff->SetMarkerStyle(20);
+	h_met_TEff->SetMarkerColor(kBlack);
+	h_met_TEff->Draw();
+	gPad->Update();
+	auto h_temp = h_met_TEff->GetPaintedGraph();
+	h_met_MG->Add(h_temp);
+	
+	leg->AddEntry(h_met_TEff,year + " " + dataset,"lep");
 
 	TString infile2 = "results" + postfix + "/" + year + "_" + dataset2 + ".root";
 	TFile* f_in2 = new TFile(infile2);
-	TH1F* h_met_denom2 = (TH1F*) f_in2->Get("metTrigAnalyzerMiniAOD/" + refTrg);
-	TH1F* h_met_num2 = (TH1F*) f_in2->Get("metTrigAnalyzerMiniAOD/" + sigTrg);
+	TH1F* h_met_denom2 = (TH1F*) f_in2->Get("TrigAnalyzerMiniAOD/" + refTrg);
+	TH1F* h_met_num2 = (TH1F*) f_in2->Get("TrigAnalyzerMiniAOD/" + sigTrg);
 
 	TH1F* h_met_eff2 = (TH1F*) h_met_num2->Clone();
 	h_met_eff2->Sumw2();
@@ -353,8 +357,18 @@ void plot_trigEff() {
 	h_met_eff2->SetMarkerStyle(21);
 	h_met_eff2->SetMarkerColor(kBlue);
 
-	h_met_eff2->Draw("pe same");
-	leg->AddEntry(h_met_eff2,year + " " + dataset2,"lep");
+	//h_met_eff2->Draw("pe same");
+
+	TEfficiency* h_met_TEff2 = new TEfficiency(*h_met_num2, *h_met_denom2);
+	h_met_TEff2->SetLineColor(kBlue);
+	h_met_TEff2->SetMarkerStyle(21);
+	h_met_TEff2->SetMarkerColor(kBlue);
+	h_met_TEff2->Draw();
+	gPad->Update();
+	auto h_temp2 = h_met_TEff2->GetPaintedGraph();
+	h_met_MG->Add(h_temp2);
+
+	leg->AddEntry(h_met_TEff2,year + " " + dataset2,"lep");
 
 	TH1F* h_met_eff3 = NULL;
 
@@ -362,8 +376,8 @@ void plot_trigEff() {
 	{
 	TString infile3 = "results" + postfix + "/" + year + "_" + dataset3 + ".root";
 	TFile* f_in3 = new TFile(infile3);
-	TH1F* h_met_denom3 = (TH1F*) f_in3->Get("metTrigAnalyzerMiniAOD/" + refTrg);
-	TH1F* h_met_num3 = (TH1F*) f_in3->Get("metTrigAnalyzerMiniAOD/" + sigTrg);
+	TH1F* h_met_denom3 = (TH1F*) f_in3->Get("TrigAnalyzerMiniAOD/" + refTrg);
+	TH1F* h_met_num3 = (TH1F*) f_in3->Get("TrigAnalyzerMiniAOD/" + sigTrg);
 
 	h_met_eff3 = (TH1F*) h_met_num3->Clone();
 	h_met_eff3->Sumw2();
@@ -372,9 +386,31 @@ void plot_trigEff() {
 	h_met_eff3->SetMarkerStyle(22);
 	h_met_eff3->SetMarkerColor(kRed);
 
-	h_met_eff3->Draw("pe same");
-	leg->AddEntry(h_met_eff3,year + " " + dataset3,"lep");
+	//h_met_eff3->Draw("pe same");
+
+	TEfficiency* h_met_TEff3 = new TEfficiency(*h_met_num3, *h_met_denom3);
+	h_met_TEff3->SetLineColor(kRed);
+	h_met_TEff3->SetMarkerStyle(22);
+	h_met_TEff3->SetMarkerColor(kRed);
+	h_met_TEff3->Draw();
+	gPad->Update();
+	auto h_temp3 = h_met_TEff3->GetPaintedGraph();
+	h_met_MG->Add(h_temp3);
+
+	leg->AddEntry(h_met_TEff3,year + " " + dataset3,"lep");
 	}
+
+	h_met_MG->Draw("ape");
+
+	//h_met_MG->GetXaxis()->SetTitle(title);
+	//std::cout<< h_met_eff->GetXaxis()->GetXmin() << std::endl;
+	//h_met_MG->GetXaxis()->SetRangeUser(h_met_eff->GetXaxis()->GetXmin(), h_met_eff->GetXaxis()->GetXmax());
+	h_met_MG->GetXaxis()->SetLimits(h_met_eff->GetXaxis()->GetXmin(), h_met_eff->GetXaxis()->GetXmax());
+	h_met_MG->GetYaxis()->SetTitle("Efficiency");
+	h_met_MG->GetYaxis()->SetTitleSize(0.05);
+	h_met_MG->GetYaxis()->SetLabelSize(0.05);
+	h_met_MG->GetYaxis()->SetTitleOffset(0.9);
+	h_met_MG->GetYaxis()->SetRangeUser(0,1);
 
 	leg->Draw("same");
 
@@ -388,7 +424,7 @@ void plot_trigEff() {
         latex.SetNDC();
         //latex.SetTextAlign(13);  //align at top
         //latex.DrawLatex(0.5,ymax+0.4,"#bf{CMS} Preliminary, 2017 data");
-        latex.DrawLatex(0.1,0.91,"CMS #bf{Preliminary}");
+        latex.DrawLatex(0.12,0.91,"CMS #bf{Preliminary}");
         TString lumi_and_energy = "#bf{" + std::to_string(lumi) + " fb^{-1} (13TeV)}";
         latex.DrawLatex(0.74,0.91,lumi_and_energy);
 
@@ -403,8 +439,9 @@ void plot_trigEff() {
 	TH1F* h_ratio2 = (TH1F*)h_met_eff2->Clone();
 	h_ratio2->Divide(h_met_eff);
 
-	h_ratio2->GetXaxis()->SetLabelSize(0.1);
-	h_ratio2->GetXaxis()->SetTitleSize(0.1);
+	h_ratio2->GetXaxis()->SetLabelSize(0.12);
+	h_ratio2->GetXaxis()->SetTitleSize(0.12);
+	//h_ratio2->GetXaxis()->SetTitleOffset(0.9);
 	h_ratio2->GetYaxis()->SetLabelSize(0.08);
 	h_ratio2->GetYaxis()->SetTitleSize(0.1);
 	h_ratio2->GetYaxis()->SetTitleOffset(0.35);

@@ -25,7 +25,7 @@ def main(args):
         DeepTopProducer(args.era),
         #Stop0lBaselineProducer(args.era, args.isFastSim),
         # UpdateGenWeight(args.crossSection, args.nEvents)
-	TrigEffAnalysis(args.era),
+	TrigEffAnalysis(args.era, args.dataset),
     ]
 
     #if args.era == "2016":
@@ -47,7 +47,7 @@ def main(args):
         files.append(line.strip())
 
 
-    p=PostProcessor(args.outputfile,files,cut=None, branchsel=None, modules=mods, histFileName="histos_METTrigNanoAOD.root",histDirName="metTrigAnalyzerMiniAOD")
+    p=PostProcessor(args.outputfile,files,cut=None, branchsel=None, modules=mods, histFileName="histos_TrigNanoAOD.root",histDirName="TrigAnalyzerMiniAOD")
     p.run()
 
 if __name__ == "__main__":
@@ -64,6 +64,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--isData', default = False)
     parser.add_argument('-c', '--crossSection')
     parser.add_argument('-n', '--nEvents', help = 'Number of Events')
+    parser.add_argument('-s', '--dataset', help = 'name of dataset')
     args = parser.parse_args()
     main(args)
 

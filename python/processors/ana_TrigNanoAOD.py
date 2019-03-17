@@ -10,30 +10,34 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collect
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
 class TrigEffAnalysis(Module):
-    def __init__(self, era):
-	self.maxEvents = -1
-	self.Year = era
+    def __init__(self, era, dataset):
 	self.Region = "signal"
 	self.Region = "QCD"
-	#self.Dataset = "singleEle"
-	#self.Dataset = "singleMu"
-	self.Dataset = "singlePhoton"
-	#self.Dataset = "jetHT"
-	#self.Dataset = "MET"
+	#self.baseline = "loose_baseline"
+	self.baseline = "highdm"
+	#self.baseline = "lowdm"
+	self.maxEvents = -1
+	self.Year = era
+	#print "type(dataset) is ", type(dataset), "dataset is", dataset
+	self.Dataset = dataset
 	self.nEvents = 0
         self.writeHistFile=True
 
     def beginJob(self,histFile=None,histDirName=None):
         Module.beginJob(self,histFile,histDirName)
-        met_bin = array.array('f',[100,110,120,130,140,150,160,170,180,190,200,210,220,230,240,250,260,270,280,290,300,350,400,500])
+        met_bin = array.array('f',[100,110,120,130,140,150,160,170,180,190,200,210,220,230,240,250,260,270,280,290,300,350,400,500,800])
         met_bin_len = len(met_bin) - 1 
         mu_bin = array.array('f',[0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,200,250,300,350,400,500])
         mu_bin_len = len(mu_bin) - 1 
+        mu_eta_bin = array.array('f',[-2.4, -2.1, -1.6, -1.2, -0.9, -0.3, -0.2, 0.2, 0.3, 0.9, 1.2, 1.6, 2.1, 2.4])
+        mu_eta_bin_len = len(mu_eta_bin) - 1 
+        eg_eta_bin = array.array('f',[-2.5, -2, -1.566, -1.444, -1, -0.5, 0, 0.5, 1, 1.444, 1.566, 2, 2.5])
+        eg_eta_bin_len = len(eg_eta_bin) - 1 
         ele_bin = array.array('f',[0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200,250,300,350,400,500])
         ele_bin_len = len(ele_bin) - 1 
         photon_bin = array.array('f',[100,120,140,160,180,200,220,240,260,280,300,320,340,360,380,400,500,600,800])
         photon_bin_len = len(photon_bin) - 1 
-        z_bin = array.array('f',[0,20,40,60,80,100,120,140,160,180,200,300,400,600,800])
+        z_bin = array.array('f',[0,20,40,60,80,100,120,140,160,180,200,300,500,800])
         z_bin_len = len(z_bin) - 1 
 
         self.h_pass_baseline  = ROOT.TH1F("h_pass_baseline" , "; passed baseline" , 2 , 0. , 2. )
@@ -43,36 +47,36 @@ class TrigEffAnalysis(Module):
         self.h_met_passtrig = ROOT.TH1F("h_met_passtrig" , "; E_{T}^{miss} [GeV]" , met_bin_len, met_bin)
         self.h_mu_all      = ROOT.TH1F("h_mu_all" , "; Muon p_{T} [GeV]" , mu_bin_len, mu_bin)
         self.h_mu_passtrig = ROOT.TH1F("h_mu_passtrig" , "; Muon p_{T} [GeV]" , mu_bin_len, mu_bin)
-        self.h_mu_all_eta      = ROOT.TH1F("h_mu_all_eta" , "; Muon Eta, p_{T} > 50 [GeV]" , 25, -2.5, 2.5)
-        self.h_mu_passtrig_eta = ROOT.TH1F("h_mu_passtrig_eta" , "; Muon Eta, p_{T} > 50 [GeV]" , 25, -2.5, 2.5)
+        self.h_mu_all_eta      = ROOT.TH1F("h_mu_all_eta" , "; Muon Eta, p_{T} > 50 [GeV]" , mu_eta_bin_len, mu_eta_bin)
+        self.h_mu_passtrig_eta = ROOT.TH1F("h_mu_passtrig_eta" , "; Muon Eta, p_{T} > 50 [GeV]" , mu_eta_bin_len, mu_eta_bin)
         self.h_ele_all      = ROOT.TH1F("h_ele_all" , "; Electron p_{T} [GeV]" , ele_bin_len, ele_bin)
         self.h_ele_passtrig = ROOT.TH1F("h_ele_passtrig" , "; Electron p_{T} [GeV]" , ele_bin_len, ele_bin)
-        self.h_ele_all_eta      = ROOT.TH1F("h_ele_all_eta" , "; Electron Eta, p_{T} > 30/40 [GeV]" , 25, -2.5, 2.5)
-        self.h_ele_passtrig_eta = ROOT.TH1F("h_ele_passtrig_eta" , "; Electron Eta, p_{T} > 30/40 [GeV]" , 25, -2.5, 2.5)
+        self.h_ele_all_eta      = ROOT.TH1F("h_ele_all_eta" , "; Electron Eta, p_{T} > 40 [GeV]" , eg_eta_bin_len, eg_eta_bin)
+        self.h_ele_passtrig_eta = ROOT.TH1F("h_ele_passtrig_eta" , "; Electron Eta, p_{T} > 40 [GeV]" , eg_eta_bin_len, eg_eta_bin)
         self.h_photon_all      = ROOT.TH1F("h_photon_all" , "; Photon p_{T} [GeV]" , photon_bin_len, photon_bin)
         self.h_photon_passtrig = ROOT.TH1F("h_photon_passtrig" , "; Photon p_{T} [GeV]" , photon_bin_len, photon_bin)
-        self.h_photon_all_eta      = ROOT.TH1F("h_photon_all_eta" , "; Photon Eta, p_{T} > 200 [GeV]" , 25, -2.5, 2.5)
-        self.h_photon_passtrig_eta = ROOT.TH1F("h_photon_passtrig_eta" , "; Photon Eta, p_{T} > 200 [GeV]" , 25, -2.5, 2.5)
+        self.h_photon_all_eta      = ROOT.TH1F("h_photon_all_eta" , "; Photon Eta, p_{T} > 200 [GeV]" , eg_eta_bin_len, eg_eta_bin)
+        self.h_photon_passtrig_eta = ROOT.TH1F("h_photon_passtrig_eta" , "; Photon Eta, p_{T} > 200 [GeV]" , eg_eta_bin_len, eg_eta_bin)
 
         self.h_met_all_mid      = ROOT.TH1F("h_met_all_mid" , "; E_{T}^{miss} [GeV]" , met_bin_len, met_bin)
         self.h_met_passtrig_mid  = ROOT.TH1F("h_met_passtrig_mid" , "; E_{T}^{miss} [GeV]" , met_bin_len, met_bin)
         self.h_mu_all_mid       = ROOT.TH1F("h_mu_all_mid" , "; Muon p_{T} [GeV]" , mu_bin_len, mu_bin)
         self.h_mu_passtrig_mid  = ROOT.TH1F("h_mu_passtrig_mid" , "; Muon p_{T} [GeV]" , mu_bin_len, mu_bin)
-        self.h_mu_all_eta_mid       = ROOT.TH1F("h_mu_all_eta_mid" , "; Muon Eta, p_{T} > 50 [GeV]" , 25, -2.5, 2.5)
-        self.h_mu_passtrig_eta_mid  = ROOT.TH1F("h_mu_passtrig_eta_mid" , "; Muon Eta, p_{T} > 50 [GeV]" , 25, -2.5, 2.5)
+        self.h_mu_all_eta_mid       = ROOT.TH1F("h_mu_all_eta_mid" , "; Muon Eta, p_{T} > 50 [GeV]" , mu_eta_bin_len, mu_eta_bin)
+        self.h_mu_passtrig_eta_mid  = ROOT.TH1F("h_mu_passtrig_eta_mid" , "; Muon Eta, p_{T} > 50 [GeV]" , mu_eta_bin_len, mu_eta_bin)
         self.h_ele_all_mid       = ROOT.TH1F("h_ele_all_mid" , "; Electron p_{T} [GeV]" , ele_bin_len, ele_bin)
         self.h_ele_passtrig_mid  = ROOT.TH1F("h_ele_passtrig_mid" , "; Electron p_{T} [GeV]" , ele_bin_len, ele_bin)
-        self.h_ele_all_eta_mid       = ROOT.TH1F("h_ele_all_eta_mid" , "; Electron Eta, p_{T} > 30/40 [GeV]" , 25, -2.5, 2.5)
-        self.h_ele_passtrig_eta_mid = ROOT.TH1F("h_ele_passtrig_eta_mid" , "; Electron Eta, p_{T} > 30/40 [GeV]" , 25, -2.5, 2.5)
+        self.h_ele_all_eta_mid       = ROOT.TH1F("h_ele_all_eta_mid" , "; Electron Eta, p_{T} > 40 [GeV]" , eg_eta_bin_len, eg_eta_bin)
+        self.h_ele_passtrig_eta_mid = ROOT.TH1F("h_ele_passtrig_eta_mid" , "; Electron Eta, p_{T} > 40 [GeV]" , eg_eta_bin_len, eg_eta_bin)
         self.h_photon_all_mid      = ROOT.TH1F("h_photon_all_mid" , "; Photon p_{T} [GeV]" , photon_bin_len, photon_bin)
         self.h_photon_passtrig_mid = ROOT.TH1F("h_photon_passtrig_mid" , "; Photon p_{T} [GeV]" , photon_bin_len, photon_bin)
-        self.h_photon_all_eta_mid      = ROOT.TH1F("h_photon_all_eta_mid" , "; Photon Eta, p_{T} > 200 [GeV]" , 25, -2.5, 2.5)
-        self.h_photon_passtrig_eta_mid = ROOT.TH1F("h_photon_passtrig_eta_mid" , "; Photon Eta, p_{T} > 200 [GeV]" , 25, -2.5, 2.5)
+        self.h_photon_all_eta_mid      = ROOT.TH1F("h_photon_all_eta_mid" , "; Photon Eta, p_{T} > 200 [GeV]" , eg_eta_bin_len, eg_eta_bin)
+        self.h_photon_passtrig_eta_mid = ROOT.TH1F("h_photon_passtrig_eta_mid" , "; Photon Eta, p_{T} > 200 [GeV]" , eg_eta_bin_len, eg_eta_bin)
 
         self.h_ele_all_tight       = ROOT.TH1F("h_ele_all_tight" , "; Electron p_{T} [GeV]" , ele_bin_len, ele_bin)
         self.h_ele_passtrig_tight  = ROOT.TH1F("h_ele_passtrig_tight" , "; Electron p_{T} [GeV]" , ele_bin_len, ele_bin)
-        self.h_ele_all_eta_tight       = ROOT.TH1F("h_ele_all_eta_tight" , "; Electron Eta, p_{T} > 30/40 [GeV]" , 25, -2.5, 2.5)
-        self.h_ele_passtrig_eta_tight = ROOT.TH1F("h_ele_passtrig_eta_tight" , "; Electron Eta, p_{T} > 30/40 [GeV]" , 25, -2.5, 2.5)
+        self.h_ele_all_eta_tight       = ROOT.TH1F("h_ele_all_eta_tight" , "; Electron Eta, p_{T} > 40 [GeV]" , eg_eta_bin_len, eg_eta_bin)
+        self.h_ele_passtrig_eta_tight = ROOT.TH1F("h_ele_passtrig_eta_tight" , "; Electron Eta, p_{T} > 40 [GeV]" , eg_eta_bin_len, eg_eta_bin)
 
         self.h_zee_all_mid       = ROOT.TH1F("h_zee_all_mid" , "; Z(ee) p_{T} [GeV]" , z_bin_len, z_bin)
         self.h_zee_passtrig_mid       = ROOT.TH1F("h_zee_passtrig_mid" , "; Z(ee) p_{T} [GeV]" , z_bin_len, z_bin)
@@ -125,9 +129,16 @@ class TrigEffAnalysis(Module):
     def mygetattr(self, my_obj, my_branch, default_bool):
 	try: getattr(my_obj, my_branch)
 	except RuntimeError:
-		#print my_branch, "not found"
-		return default_bool
+	    #print my_branch, "not found"
+	    return default_bool
 	else: return getattr(my_obj, my_branch)
+
+    #follow root dPhi calculation: https://root.cern.ch/root/html/src/ROOT__Math__VectorUtil.h.html#60
+    def mydPhi(self, phi1, phi2):
+	dPhi = phi1 - phi2
+	if(dPhi > math.pi): dPhi = dPhi - 2 * math.pi
+	elif(dPhi <= -math.pi): dPhi = dPhi + 2 * math.pi
+	return abs(dPhi)
 
     def SelIsotrack(self, isk, met):
         iso = isk.pfRelIso03_chg
@@ -164,8 +175,6 @@ class TrigEffAnalysis(Module):
 	if (self.maxEvents != -1 and self.nEvents > self.maxEvents):
 	    return False
 
-	ele_pt_cut = 40
-	if(self.Year == "2016"): ele_pt_cut = 30
 	deepCSV_cut = 0.4941
 	if(self.Year == "2016"): deepCSV_cut = 0.6324
 
@@ -275,25 +284,25 @@ class TrigEffAnalysis(Module):
 	pass_dPhi_highdm = False
 	if (n_jets == 2):
 		if(self.Region == "signal"):
-			if (abs(jets[0].phi - met.phi) > 0.5 and abs(jets[1].phi - met.phi) > 0.15):
+			if (self.mydPhi(jets[0].phi, met.phi) > 0.5 and self.mydPhi(jets[1].phi, met.phi) > 0.15):
 				pass_dPhi = True
 		if(self.Region == "QCD"):
-			if (abs(jets[0].phi - met.phi) < 0.1 or abs(jets[1].phi - met.phi) < 0.1):
+			if (self.mydPhi(jets[0].phi, met.phi) < 0.1 or self.mydPhi(jets[1].phi, met.phi) < 0.1):
 				pass_dPhi = True
 	if (n_jets > 2):
 		if(self.Region == "signal"):
-			if (abs(jets[0].phi - met.phi) > 0.5 and abs(jets[1].phi - met.phi) > 0.15 and abs(jets[2].phi - met.phi) > 0.15):
+			if (self.mydPhi(jets[0].phi, met.phi) > 0.5 and self.mydPhi(jets[1].phi, met.phi) > 0.15 and self.mydPhi(jets[2].phi, met.phi) > 0.15):
 				pass_dPhi = True
 		if(self.Region == "QCD"):
-			if (abs(jets[0].phi - met.phi) < 0.1 or abs(jets[1].phi - met.phi) < 0.1 or abs(jets[2].phi - met.phi) < 0.1):
+			if (self.mydPhi(jets[0].phi, met.phi) < 0.1 or self.mydPhi(jets[1].phi, met.phi) < 0.1 or self.mydPhi(jets[2].phi, met.phi) < 0.1):
 				pass_dPhi = True
 
 	if (n_jets >= 5):
 		if(self.Region == "signal"):
-			if (abs(jets[0].phi - met.phi) > 0.5 and abs(jets[1].phi - met.phi) > 0.5 and abs(jets[2].phi - met.phi) > 0.5 and abs(jets[3].phi - met.phi) > 0.5):
+			if (self.mydPhi(jets[0].phi, met.phi) > 0.5 and self.mydPhi(jets[1].phi, met.phi) > 0.5 and self.mydPhi(jets[2].phi, met.phi) > 0.5 and self.mydPhi(jets[3].phi, met.phi) > 0.5):
 				pass_dPhi_highdm = True
 		if(self.Region == "QCD"):
-			if (abs(jets[0].phi - met.phi) < 0.1 or abs(jets[1].phi - met.phi) < 0.1 or abs(jets[2].phi - met.phi) < 0.1):
+			if (self.mydPhi(jets[0].phi, met.phi) < 0.1 or self.mydPhi(jets[1].phi, met.phi) < 0.1 or self.mydPhi(jets[2].phi, met.phi) < 0.1):
 				pass_dPhi_highdm = True
 
 	pass_loose_baseline = (pass_filter and pass_dPhi and ht > 300) 
@@ -304,9 +313,10 @@ class TrigEffAnalysis(Module):
 	pass_loosejet = (pass_loose_baseline and pass_dPhi_highdm)
 	pass_looseb = (pass_loose_baseline and n_bjets >= 1)
 
-	#pass_baseline = pass_loose_baseline
-	pass_baseline = pass_highdm
-	#pass_baseline = pass_lowdm
+	pass_baseline = False
+	if(self.baseline == "loose_baseline"): pass_baseline = pass_loose_baseline
+	if(self.baseline == "highdm"): pass_baseline = pass_highdm
+	if(self.baseline == "lowdm"): pass_baseline = pass_lowdm
 
 	#pass_baseline = pass_loosejet
 	#pass_baseline = pass_looseb
@@ -316,13 +326,13 @@ class TrigEffAnalysis(Module):
 
         refAccept = False
 	if(self.Year == "2016"):
-		if(self.Dataset == "singleEle"):
+		if(self.Dataset == "SingleElectron"):
         		refAccept = hlt.Ele27_WPTight_Gsf
-		if(self.Dataset == "singleMu"):
+		if(self.Dataset == "SingleMuon"):
         		refAccept = hlt.Mu50
-		if(self.Dataset == "singlePhoton"):
+		if(self.Dataset == "SinglePhoton"):
         		refAccept = hlt.Photon175
-		if(self.Dataset == "jetHT"):
+		if(self.Dataset == "JetHT"):
 			refAccept = (
 			self.mygetattr(hlt, 'PFHT125', False)
 			or self.mygetattr(hlt, 'PFHT200', False)
@@ -348,14 +358,17 @@ class TrigEffAnalysis(Module):
 			or self.mygetattr(hlt, 'PFMETNoMu120_PFMHTNoMu120_IDTight', False)
 			)
 
-	if(self.Year == "2017"):
-		if(self.Dataset == "singleEle"):
-        		refAccept = hlt.Ele35_WPTight_Gsf
-		if(self.Dataset == "singleMu"):
+	if(self.Year == "2017" or self.Year == "2018"):
+		if(self.Dataset == "SingleElectron"):
+        		refAccept =(
+			self.mygetattr(hlt, 'Ele32_WPTight_Gsf', False)
+			or self.mygetattr(hlt, 'Ele35_WPTight_Gsf', False)
+			)
+		if(self.Dataset == "SingleMuon"):
         		refAccept = hlt.Mu50
-		if(self.Dataset == "singlePhoton"):
+		if(self.Dataset == "SinglePhoton"):
         		refAccept = hlt.Photon200
-		if(self.Dataset == "jetHT"):
+		if(self.Dataset == "JetHT"):
 			refAccept =(
 			self.mygetattr(hlt, 'PFHT1050', False)
 			or self.mygetattr(hlt, 'PFHT180', False)
@@ -451,7 +464,7 @@ class TrigEffAnalysis(Module):
 	)
 
 	#veto / loose ID
-	if (self.Dataset == "singleEle" and n_ele >= 1 and ele_veto[0].pt > ele_pt_cut):
+	if (self.Dataset == "SingleElectron" and n_ele >= 1):
 		if (n_mu == 0):
         		self.h_met_all.Fill(met.pt)
         		if (sigAccept_met):
@@ -469,7 +482,7 @@ class TrigEffAnalysis(Module):
 				self.h_mu_passtrig.Fill(mu_loose[0].pt)
         			if (mu_loose[0].pt > 50): self.h_mu_passtrig_eta.Fill(mu_loose[0].eta)
 
-	if (self.Dataset == "singleMu" and n_mu >= 1 and mu_loose[0].pt > 50):
+	if (self.Dataset == "SingleMuon" and n_mu >= 1):
 		if (n_ele == 0):
         		self.h_met_all.Fill(met.pt)
         		if (sigAccept_met):
@@ -482,18 +495,18 @@ class TrigEffAnalysis(Module):
 					if(photon_loose[0].pt > 200): self.h_photon_passtrig_eta.Fill(photon_loose[0].eta)
 		if (n_ele >= 1):
         		self.h_ele_all.Fill(ele_veto[0].pt)
-        		if (ele_veto[0].pt > ele_pt_cut): self.h_ele_all_eta.Fill(ele_veto[0].eta)
+        		if (ele_veto[0].pt > 40): self.h_ele_all_eta.Fill(ele_veto[0].eta)
         		if (sigAccept_ele):
 				self.h_ele_passtrig.Fill(ele_veto[0].pt)
-        			if (ele_veto[0].pt > ele_pt_cut): self.h_ele_passtrig_eta.Fill(ele_veto[0].eta)
+        			if (ele_veto[0].pt > 40): self.h_ele_passtrig_eta.Fill(ele_veto[0].eta)
 
-	if (self.Dataset == "singlePhoton"):
+	if (self.Dataset == "SinglePhoton"):
 		if (n_ele == 0 and n_mu == 0):
         		self.h_met_all.Fill(met.pt)
         		if (sigAccept_met):
 				self.h_met_passtrig.Fill(met.pt)
 
-	if (self.Dataset == "jetHT"):
+	if (self.Dataset == "JetHT"):
 		if (n_mu == 0 and n_ele == 0):
         		self.h_met_all.Fill(met.pt)
         		if (sigAccept_met):
@@ -512,12 +525,11 @@ class TrigEffAnalysis(Module):
         			if (mu_loose[0].pt > 50): self.h_mu_passtrig_eta.Fill(mu_loose[0].eta)
 		if (n_mu == 0 and n_ele >= 1):
         		self.h_ele_all.Fill(ele_veto[0].pt)
-        		if (ele_veto[0].pt > ele_pt_cut): self.h_ele_all_eta.Fill(ele_veto[0].eta)
+        		if (ele_veto[0].pt > 40): self.h_ele_all_eta.Fill(ele_veto[0].eta)
         		if (sigAccept_ele):
 				self.h_ele_passtrig.Fill(ele_veto[0].pt)
-        			if (ele_veto[0].pt > ele_pt_cut): self.h_ele_passtrig_eta.Fill(ele_veto[0].eta)
+        			if (ele_veto[0].pt > 40): self.h_ele_passtrig_eta.Fill(ele_veto[0].eta)
 
-	#if (self.Dataset == "MET" and met.pt > 250):
 	if (self.Dataset == "MET"):
 		if (n_mu == 0 and n_ele == 0):
 			if (n_photon >=1):
@@ -534,13 +546,13 @@ class TrigEffAnalysis(Module):
         			if (mu_loose[0].pt > 50): self.h_mu_passtrig_eta.Fill(mu_loose[0].eta)
 		if (n_mu == 0 and n_ele >= 1):
         		self.h_ele_all.Fill(ele_veto[0].pt)
-        		if (ele_veto[0].pt > ele_pt_cut): self.h_ele_all_eta.Fill(ele_veto[0].eta)
+        		if (ele_veto[0].pt > 40): self.h_ele_all_eta.Fill(ele_veto[0].eta)
         		if (sigAccept_ele):
 				self.h_ele_passtrig.Fill(ele_veto[0].pt)
-        			if (ele_veto[0].pt > ele_pt_cut): self.h_ele_passtrig_eta.Fill(ele_veto[0].eta)
+        			if (ele_veto[0].pt > 40): self.h_ele_passtrig_eta.Fill(ele_veto[0].eta)
 
 	#mid / tight ID
-	if (self.Dataset == "singleEle" and n_ele_mid >= 1 and ele_mid[0].pt > ele_pt_cut):
+	if (self.Dataset == "SingleElectron" and n_ele_mid >= 1):
 		if (n_mu == 0):
         		self.h_met_all_mid.Fill(met.pt)
         		if (sigAccept_met):
@@ -562,7 +574,7 @@ class TrigEffAnalysis(Module):
         		if (sigAccept_mu):
 				self.h_zmumu_passtrig_mid.Fill(zmumu_mid[0].Pt())
 
-	if (self.Dataset == "singleMu" and n_mu_mid >= 1 and mu_mid[0].pt > 50):
+	if (self.Dataset == "SingleMuon" and n_mu_mid >= 1):
 		if (n_ele == 0):
         		self.h_met_all_mid.Fill(met.pt)
         		if (sigAccept_met):
@@ -575,28 +587,28 @@ class TrigEffAnalysis(Module):
 					if(photon_loose[0].pt > 200): self.h_photon_passtrig_eta_mid.Fill(photon_loose[0].eta)
 		if (n_ele_mid >= 1):
         		self.h_ele_all_mid.Fill(ele_mid[0].pt)
-        		if (ele_mid[0].pt > ele_pt_cut): self.h_ele_all_eta_mid.Fill(ele_mid[0].eta)
+        		if (ele_mid[0].pt > 40): self.h_ele_all_eta_mid.Fill(ele_mid[0].eta)
         		if (sigAccept_ele):
 				self.h_ele_passtrig_mid.Fill(ele_mid[0].pt)
-        			if (ele_mid[0].pt > ele_pt_cut): self.h_ele_passtrig_eta_mid.Fill(ele_mid[0].eta)
+        			if (ele_mid[0].pt > 40): self.h_ele_passtrig_eta_mid.Fill(ele_mid[0].eta)
 		if (n_ele_tight >= 1):
         		self.h_ele_all_tight.Fill(ele_tight[0].pt)
-        		if (ele_tight[0].pt > ele_pt_cut): self.h_ele_all_eta_tight.Fill(ele_tight[0].eta)
+        		if (ele_tight[0].pt > 40): self.h_ele_all_eta_tight.Fill(ele_tight[0].eta)
         		if (sigAccept_ele):
 				self.h_ele_passtrig_tight.Fill(ele_tight[0].pt)
-        			if (ele_tight[0].pt > ele_pt_cut): self.h_ele_passtrig_eta_tight.Fill(ele_tight[0].eta)
+        			if (ele_tight[0].pt > 40): self.h_ele_passtrig_eta_tight.Fill(ele_tight[0].eta)
 		if (len(zee_mid) == 1):
 			self.h_zee_all_mid.Fill(zee_mid[0].Pt())
         		if (sigAccept_ele):
 				self.h_zee_passtrig_mid.Fill(zee_mid[0].Pt())
 
-	if (self.Dataset == "singlePhoton"):
+	if (self.Dataset == "SinglePhoton"):
 		if (n_ele == 0 and n_mu == 0):
         		self.h_met_all_mid.Fill(met.pt)
         		if (sigAccept_met):
 				self.h_met_passtrig_mid.Fill(met.pt)
 
-	if (self.Dataset == "jetHT"):
+	if (self.Dataset == "JetHT"):
 		if (n_mu == 0 and n_ele == 0):
         		self.h_met_all_mid.Fill(met.pt)
         		if (sigAccept_met):
@@ -619,22 +631,21 @@ class TrigEffAnalysis(Module):
 				self.h_zmumu_passtrig_mid.Fill(zmumu_mid[0].Pt())
 		if (n_mu == 0 and n_ele_mid >= 1):
         		self.h_ele_all_mid.Fill(ele_mid[0].pt)
-        		if (ele_mid[0].pt > ele_pt_cut): self.h_ele_all_eta_mid.Fill(ele_mid[0].eta)
+        		if (ele_mid[0].pt > 40): self.h_ele_all_eta_mid.Fill(ele_mid[0].eta)
         		if (sigAccept_ele):
 				self.h_ele_passtrig_mid.Fill(ele_mid[0].pt)
-        			if (ele_mid[0].pt > ele_pt_cut): self.h_ele_passtrig_eta_mid.Fill(ele_mid[0].eta)
+        			if (ele_mid[0].pt > 40): self.h_ele_passtrig_eta_mid.Fill(ele_mid[0].eta)
 		if (n_mu == 0 and n_ele_tight >= 1):
         		self.h_ele_all_tight.Fill(ele_tight[0].pt)
-        		if (ele_tight[0].pt > ele_pt_cut): self.h_ele_all_eta_tight.Fill(ele_tight[0].eta)
+        		if (ele_tight[0].pt > 40): self.h_ele_all_eta_tight.Fill(ele_tight[0].eta)
         		if (sigAccept_ele):
 				self.h_ele_passtrig_tight.Fill(ele_tight[0].pt)
-        			if (ele_tight[0].pt > ele_pt_cut): self.h_ele_passtrig_eta_tight.Fill(ele_tight[0].eta)
+        			if (ele_tight[0].pt > 40): self.h_ele_passtrig_eta_tight.Fill(ele_tight[0].eta)
 		if (n_mu == 0 and len(zee_mid) == 1):
 			self.h_zee_all_mid.Fill(zee_mid[0].Pt())
         		if (sigAccept_ele):
 				self.h_zee_passtrig_mid.Fill(zee_mid[0].Pt())
 
-	#if (self.Dataset == "MET" and met.pt > 250):
 	if (self.Dataset == "MET"):
 		if (n_mu == 0 and n_ele == 0):
 			if (n_photon >=1):
@@ -655,16 +666,16 @@ class TrigEffAnalysis(Module):
 				self.h_zmumu_passtrig_mid.Fill(zmumu_mid[0].Pt())
 		if (n_mu == 0 and n_ele_mid >= 1):
         		self.h_ele_all_mid.Fill(ele_mid[0].pt)
-        		if (ele_mid[0].pt > ele_pt_cut): self.h_ele_all_eta_mid.Fill(ele_mid[0].eta)
+        		if (ele_mid[0].pt > 40): self.h_ele_all_eta_mid.Fill(ele_mid[0].eta)
         		if (sigAccept_ele):
 				self.h_ele_passtrig_mid.Fill(ele_mid[0].pt)
-        			if (ele_mid[0].pt > ele_pt_cut): self.h_ele_passtrig_eta_mid.Fill(ele_mid[0].eta)
+        			if (ele_mid[0].pt > 40): self.h_ele_passtrig_eta_mid.Fill(ele_mid[0].eta)
 		if (n_mu == 0 and n_ele_tight >= 1):
         		self.h_ele_all_tight.Fill(ele_tight[0].pt)
-        		if (ele_tight[0].pt > ele_pt_cut): self.h_ele_all_eta_tight.Fill(ele_tight[0].eta)
+        		if (ele_tight[0].pt > 40): self.h_ele_all_eta_tight.Fill(ele_tight[0].eta)
         		if (sigAccept_ele):
 				self.h_ele_passtrig_tight.Fill(ele_tight[0].pt)
-        			if (ele_tight[0].pt > ele_pt_cut): self.h_ele_passtrig_eta_tight.Fill(ele_tight[0].eta)
+        			if (ele_tight[0].pt > 40): self.h_ele_passtrig_eta_tight.Fill(ele_tight[0].eta)
 		if (n_mu == 0 and len(zee_mid) == 1):
 			self.h_zee_all_mid.Fill(zee_mid[0].Pt())
         		if (sigAccept_ele):

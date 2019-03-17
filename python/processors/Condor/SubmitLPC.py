@@ -12,13 +12,13 @@ import getpass
 import argparse
 from collections import defaultdict
 
-n_jobs = 100
+n_jobs = 200
 
 # TODO: set OutDir (and ProjectName?) to be modified based on input filelist location
 DelExe    = '../Stop0l_postproc.py'
 OutDir = '/store/user/%s/StopStudy' %  getpass.getuser()
 tempdir = '/uscms_data/d3/%s/condor_temp/' % getpass.getuser()
-ProjectName = '2017_SinglePhoton_highdm_QCD'
+ProjectName = '2016_highdm_QCD'
 argument = "--inputFiles=%s.$(Process).list "
 sendfiles = ["../keep_and_drop.txt"]
 
@@ -65,7 +65,8 @@ def ConfigList(config):
             #"isFastSim" : "fastsim" in stripped_entry[0],
             #"crossSection":  float(stripped_entry[4]) * float(stripped_entry[7]),
             #"nEvents":  int(stripped_entry[5])- int(stripped_entry[6]),
-            "era" : "%s" % (stripped_entry[3])
+            "era" : "%s" % (stripped_entry[3]),
+            "dataset" : "%s" % (stripped_entry[4])
         }
 
     return process
