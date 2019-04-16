@@ -21,8 +21,8 @@ class ISRSFWeightProducer(Module):
         # https://indico.cern.ch/event/592621/contributions/2398559/attachments/1383909/2105089/16-12-05_ana_manuelf_isr.pdf
         # https://indico.cern.ch/event/811884/contributions/3383484/attachments/1824913/2986231/ISR_ConcMarch2019.pdf
         # Apply to 2016 TTbar and Run2 Signal only
-        self.Corr2016 = np.asarray([1 , 0.920 , 0.821 , 0.715 , 0.662 , 0.561 , 0.511])
-        self.nISRbins = [0 , 1     , 2     , 3     , 4     , 5     , 6]
+        self.Corr2016 = np.asarray([1 , 0.920 , 0.821 , 0.715 , 0.662 , 0.561 , 0.511, 0.511, 0.511, 0.511])
+        self.nISRbins = [0 , 1     , 2     , 3     , 4     , 5     , 6, 7, 8, 14]
         self.ISRcentral = np.ones(self.Corr2016.shape)
         self.ISRUp      = np.ones(self.Corr2016.shape)
         self.ISRDown    = np.ones(self.Corr2016.shape)
@@ -88,7 +88,8 @@ class ISRSFWeightProducer(Module):
         # Looks like room for speed up
         jets = Collection(event, "Jet")
         genParts = Collection(event, "GenPart")
-
+        electrons = Collection(event, "Electron")
+        muon = Collection(event, "Muon")
         mother =-1
         daughter = [[] for x in range(0,len(genParts))]
         for iGenPart, genPart in enumerate(genParts):
@@ -98,7 +99,17 @@ class ISRSFWeightProducer(Module):
  
         nisr = 0
         for jet in jets:
-            matched = False 
+            matched = False
+            isLep = False
+            if jet.electronIdx1 >=0 and electrons[jet.electronIdx1].pt >10:
+                electrons[jet.electronIdx1].miniPFRelIso_all <0.1
+                dR = deltaR(jet,electrons[jet.electronIdx1])
+                isLep = isLep or (electrons[jet.electronIdx1].cutBasedNoIso<1 and electrons[jet.electronIdx1].miniPFRelIso_all and dR < 0.2)
+            if jet.muonIdx1 >=0 and muon[jet.muonIdx1].pt > 10:
+                dR = deltaR(jet,muon[jet.muonIdx1])
+                isLep = isLep or (muon[jet.muonIdx1].mediumId and muon[jet.muonIdx1].miniPFRelIso_all < 0.2 and dR < 0.2)
+            if isLep: continue
+            if (jet.pt <10 or abs(jet.eta) > 2.4): continue
             for iGenPart, genPart in enumerate(genParts):
                 if matched: break
                 if genPart.statusFlags != 23 or abs(genPart.pdgId) > 5: continue
@@ -112,7 +123,7 @@ class ISRSFWeightProducer(Module):
             if not matched:
                 nisr+=1
 
-        nbin = bisect.bisect(self.nISRbins, nisr) -1
+        nbin = bisect.bisect(self.nISRbins, nisr) #-1
         self.out.fillBranch("nISRJets", nisr)           
         self.out.fillBranch("ISRWeight", self.ISRcentral[nbin])
         self.out.fillBranch("ISRWeight_Up", self.ISRUp[nbin])
