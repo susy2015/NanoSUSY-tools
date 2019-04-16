@@ -102,14 +102,13 @@ class ISRSFWeightProducer(Module):
             matched = False
             isLep = False
             if jet.electronIdx1 >=0 and electrons[jet.electronIdx1].pt >10:
-                electrons[jet.electronIdx1].miniPFRelIso_all <0.1
                 dR = deltaR(jet,electrons[jet.electronIdx1])
-                isLep = isLep or (electrons[jet.electronIdx1].cutBasedNoIso<1 and electrons[jet.electronIdx1].miniPFRelIso_all and dR < 0.2)
+                isLep = isLep or (electrons[jet.electronIdx1].cutBasedNoIso >= 1 and electrons[jet.electronIdx1].miniPFRelIso_all <0.1 and dR < 0.2)
             if jet.muonIdx1 >=0 and muon[jet.muonIdx1].pt > 10:
                 dR = deltaR(jet,muon[jet.muonIdx1])
                 isLep = isLep or (muon[jet.muonIdx1].mediumId and muon[jet.muonIdx1].miniPFRelIso_all < 0.2 and dR < 0.2)
             if isLep: continue
-            if (jet.pt <10 or abs(jet.eta) > 2.4): continue
+            if (jet.pt <30 or abs(jet.eta) > 2.4): continue
             for iGenPart, genPart in enumerate(genParts):
                 if matched: break
                 if genPart.statusFlags != 23 or abs(genPart.pdgId) > 5: continue
