@@ -80,6 +80,7 @@ def ConfigList(config):
             "Filepath__" : "%s/%s" % (stripped_entry[1], stripped_entry[2]),
             #"Outpath__" : "%s" % (stripped_entry[1]) + "/" + ShortProjectName + VersionNumber + "/" + stripped_entry[0]+"/", #old
             "Outpath__" : "%s" % (replaced_outdir) + VersionNumber + "/" + stripped_entry[0] + "/", #new
+            "sampleName" : stripped_entry[0], #process
             "isData__" : "Data" in stripped_entry[0],
             "isFastSim" : "fastsim" in stripped_entry[0], #isFastSim is a toggle in Stop0l_postproc.py, so it should be sent with no value.
             "era" : temp_era,
@@ -94,7 +95,6 @@ def ConfigList(config):
             process[stripped_entry[0]].update( {
                 "crossSection":  float(stripped_entry[4]) * float(stripped_entry[7]),
                 "nEvents":  int(stripped_entry[5]) - int(stripped_entry[6]), # using all event weight
-                "sampleName": stripped_entry[0], #process
                 "totEvents__":  int(stripped_entry[5]) + int(stripped_entry[6]), # using all event weight
             })
 
