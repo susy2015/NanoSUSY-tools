@@ -97,8 +97,9 @@ def ConfigList(config):
             "era" : temp_era,
         }
         if process[stripped_entry[0]]["isData__"]:
+            foundEra = re.search("Period",stripped_entry[0])
             process[stripped_entry[0]].update( {
-                "dataEra": stripped_entry[0][-1], #Example naming convention: Data_MET_2018_PeriodC. Alternate option: match "Period", take location + 6.
+                "dataEra": stripped_entry[0][foundEra.end(0)], #Example naming convention: Data_MET_2018_PeriodC, Data_MET_2018_PeriodB_PostHEM.
                 "crossSection":  float(stripped_entry[4]) , #storing lumi for data
                 "nEvents":  int(stripped_entry[5]),
             })
