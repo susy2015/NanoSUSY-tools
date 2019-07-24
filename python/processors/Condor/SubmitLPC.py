@@ -18,7 +18,7 @@ n_jobs = 200
 DelExe    = '../Stop0l_postproc.py'
 OutDir = '/store/user/%s/StopStudy' %  getpass.getuser()
 tempdir = '/uscms_data/d3/%s/condor_temp/' % getpass.getuser()
-ProjectName = '2016_highdm_QCD'
+ProjectName = '2017_highdm'
 argument = "--inputFiles=%s.$(Process).list "
 sendfiles = ["../keep_and_drop.txt"]
 
@@ -37,7 +37,7 @@ def tar_cmssw():
         if tarinfo.size > 100*1024*1024:
             tarinfo = None
             return tarinfo
-        exclude_patterns = ['/.git/', '/tmp/', '/jobs.*/', '/logs/', '/.SCRAM/', '.pyc']
+        exclude_patterns = ['/.git/', '/tmp/', '/jobs.*/', '/logs/', '/.SCRAM/', '.pyc', '/.*results.*/', '/plots/', '/test/']
         for pattern in exclude_patterns:
             if re.search(pattern, tarinfo.name):
                 print('ignoring %s in the tarball', tarinfo.name)

@@ -10,7 +10,8 @@
 void save_trigEff() {
 
 	TString year = "2016";
-	//year = "2017";
+	year = "2017";
+	year = "2018";
 
 	TString out_file_name = year + "_trigger_eff.root";
 	TFile out_file(out_file_name,"RECREATE");
@@ -148,6 +149,7 @@ void save_trigEff() {
 
 		out_file.cd();
 		h_temp->Write();
+		std::cout << typeid(h_temp).name() << std::endl;
 	}
 
 	out_file.Close();

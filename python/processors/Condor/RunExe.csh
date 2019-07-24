@@ -41,9 +41,9 @@ set filename = "`echo $filename | sed 's/ --era=.*//'`"
 set filename = "`echo $filename | sed 's/list/root/'`"
 
 if ($? == 0) then
-  foreach tarfile (`ls *gz FileList/*gz`)
-    tar -tf $tarfile  | xargs rm -r
-  end
+#  foreach tarfile (`ls *gz FileList/*gz`)
+#    tar -tf $tarfile  | xargs rm -r
+#  end
   rm *Skim.root
   foreach outfile (`ls *root`)
     echo "Copying ${outfile} to ${OUTPUT}"

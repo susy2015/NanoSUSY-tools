@@ -8,6 +8,9 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 class Stop0l_trigger(Module):
     def __init__(self, era):
         self.era = era
+	eff_file = "%s/src/PhysicsTools/NanoSUSYTools/data/trigger_eff/" % os.environ['CMSSW_BASE']
+	eff_file = eff_file + self.era + "_trigger_eff.root"
+	self.tf = ROOT.TFile.Open(eff_file)
 
     def beginJob(self):
         pass
@@ -34,11 +37,7 @@ class Stop0l_trigger(Module):
 	else: return getattr(my_obj, my_branch)
 
     def get_efficiency(self, trigger_name, kinematic):
-	eff_file = "%s/src/PhysicsTools/NanoSUSYTools/data/trigger_eff/" % os.environ['CMSSW_BASE']
-	eff_file = eff_file + self.era + "_trigger_eff.root"
-	tf = ROOT.TFile.Open(eff_file)
-	eff_hist = tf.Get(trigger_name)
-	tf.Close()
+	eff_hist = self.tf.Get(trigger_name)
 	return eff_hist.GetBinContent(eff_hist.FindBinNumber(kinematic))
 
     def analyze(self, event):
@@ -110,7 +109,7 @@ class Stop0l_trigger(Module):
 	or self.mygetattr(hlt, 'Photon200', False)
 	)
 
-	MET_trigger_eff_loose_baseline = get_efficiency("MET_loose_baseline", met)
+	MET_trigger_eff_loose_baseline = get_efficiency("MET_loose_baseline", met.pt)
 
         ### Store output
         self.out.fillBranch("Pass_trigger_MET", Pass_trigger_MET)
@@ -120,6 +119,7 @@ class Stop0l_trigger(Module):
 
 	self.out.fillBranch("Stop0l_trigger_eff_MET_loose_baseline", MET_trigger_eff_loose_baseline)
 
+	self.tf.Close()
         return True
 
 

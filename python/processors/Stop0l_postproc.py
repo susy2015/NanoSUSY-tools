@@ -8,6 +8,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import Pos
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection, Object
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
+from PhysicsTools.NanoSUSYTools.modules.Stop0l_trigger import *
 from PhysicsTools.NanoSUSYTools.modules.eleMiniCutIDProducer import *
 #from PhysicsTools.NanoSUSYTools.modules.Stop0lObjectsProducer import *
 #from PhysicsTools.NanoSUSYTools.modules.Stop0lBaselineProducer import *
@@ -20,11 +21,12 @@ from PhysicsTools.NanoSUSYTools.processors.ana_TrigNanoAOD import TrigEffAnalysi
 def main(args):
 
     mods = [
+	#Stop0l_trigger(args.era),
         eleMiniCutID(),
         #Stop0lObjectsProducer(args.era),
         DeepTopProducer(args.era),
         #Stop0lBaselineProducer(args.era, args.isFastSim),
-        # UpdateGenWeight(args.crossSection, args.nEvents)
+        #UpdateGenWeight(args.crossSection, args.nEvents)
 	TrigEffAnalysis(args.era, args.dataset),
     ]
 

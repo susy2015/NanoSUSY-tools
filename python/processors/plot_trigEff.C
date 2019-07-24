@@ -10,15 +10,15 @@
 void plot_trigEff() {
 
 	TString year = "2016";
-	year = "2017";
+	//year = "2017";
 	//year = "2018";
 	TString postfix = "_loose_baseline";
-	postfix = "_highdm";
-	postfix = "_lowdm";
+	//postfix = "_highdm";
+	//postfix = "_lowdm";
 
 	bool plot_MET = false;
 	bool plot_MET_mid = false;
-	bool plot_MET_QCD = true;
+	bool plot_MET_QCD = false;
 	bool plot_MET_QCD_compare = false;
 	bool plot_MET_mid_compare = false;
 	bool plot_Ele = false;
@@ -34,7 +34,7 @@ void plot_trigEff() {
 	bool plot_photon = false;
 	bool plot_photon_eta = false;
 	bool plot_photon_mid = false;
-	bool plot_photon_eta_mid = false;
+	bool plot_photon_eta_mid = true;
 	bool plot_zee_mid = false;
 	bool plot_zmumu_mid = false;
 
@@ -66,6 +66,7 @@ void plot_trigEff() {
 	dataset = "SingleElectron";
 	dataset2 = "SingleMuon";
 	dataset3 = "JetHT";
+	//dataset3 = "SinglePhoton";
 	refTrg = "h_met_all_mid";
 	sigTrg = "h_met_passtrig_mid";
 	//title = "E_{T}^{miss} [GeV]";

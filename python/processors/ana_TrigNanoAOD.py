@@ -12,7 +12,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 class TrigEffAnalysis(Module):
     def __init__(self, era, dataset):
 	self.Region = "signal"
-	self.Region = "QCD"
+	#self.Region = "QCD"
 	#self.baseline = "loose_baseline"
 	self.baseline = "highdm"
 	#self.baseline = "lowdm"
@@ -45,6 +45,8 @@ class TrigEffAnalysis(Module):
 
         self.h_met_all      = ROOT.TH1F("h_met_all" , "; E_{T}^{miss} [GeV]" , met_bin_len, met_bin)
         self.h_met_passtrig = ROOT.TH1F("h_met_passtrig" , "; E_{T}^{miss} [GeV]" , met_bin_len, met_bin)
+        self.h_met_all_RA2b_jet      = ROOT.TH1F("h_met_all_RA2b_jet" , "; E_{T}^{miss} [GeV]" , met_bin_len, met_bin)
+        self.h_met_passtrig_RA2b_jet = ROOT.TH1F("h_met_passtrig_RA2b_jet" , "; E_{T}^{miss} [GeV]" , met_bin_len, met_bin)
         self.h_mu_all      = ROOT.TH1F("h_mu_all" , "; Muon p_{T} [GeV]" , mu_bin_len, mu_bin)
         self.h_mu_passtrig = ROOT.TH1F("h_mu_passtrig" , "; Muon p_{T} [GeV]" , mu_bin_len, mu_bin)
         self.h_mu_all_eta      = ROOT.TH1F("h_mu_all_eta" , "; Muon Eta, p_{T} > 50 [GeV]" , mu_eta_bin_len, mu_eta_bin)
@@ -60,6 +62,12 @@ class TrigEffAnalysis(Module):
 
         self.h_met_all_mid      = ROOT.TH1F("h_met_all_mid" , "; E_{T}^{miss} [GeV]" , met_bin_len, met_bin)
         self.h_met_passtrig_mid  = ROOT.TH1F("h_met_passtrig_mid" , "; E_{T}^{miss} [GeV]" , met_bin_len, met_bin)
+
+        self.h_met_all_mid_RA2b_veto      = ROOT.TH1F("h_met_all_mid_RA2b_veto" , "; E_{T}^{miss} [GeV]" , met_bin_len, met_bin)
+        self.h_met_passtrig_mid_RA2b_veto = ROOT.TH1F("h_met_passtrig_mid_RA2b_veto" , "; E_{T}^{miss} [GeV]" , met_bin_len, met_bin)
+        self.h_met_all_mid_RA2b_jet      = ROOT.TH1F("h_met_all_mid_RA2b_jet" , "; E_{T}^{miss} [GeV]" , met_bin_len, met_bin)
+        self.h_met_passtrig_mid_RA2b_jet = ROOT.TH1F("h_met_passtrig_mid_RA2b_jet" , "; E_{T}^{miss} [GeV]" , met_bin_len, met_bin)
+
         self.h_mu_all_mid       = ROOT.TH1F("h_mu_all_mid" , "; Muon p_{T} [GeV]" , mu_bin_len, mu_bin)
         self.h_mu_passtrig_mid  = ROOT.TH1F("h_mu_passtrig_mid" , "; Muon p_{T} [GeV]" , mu_bin_len, mu_bin)
         self.h_mu_all_eta_mid       = ROOT.TH1F("h_mu_all_eta_mid" , "; Muon Eta, p_{T} > 50 [GeV]" , mu_eta_bin_len, mu_eta_bin)
@@ -103,6 +111,12 @@ class TrigEffAnalysis(Module):
 
         self.addObject(self.h_met_all_mid )
         self.addObject(self.h_met_passtrig_mid )
+
+        self.addObject(self.h_met_all_mid_RA2b_veto )
+        self.addObject(self.h_met_passtrig_mid_RA2b_veto )
+        self.addObject(self.h_met_all_mid_RA2b_jet )
+        self.addObject(self.h_met_passtrig_mid_RA2b_jet )
+
         self.addObject(self.h_mu_all_mid )
         self.addObject(self.h_mu_passtrig_mid )
         self.addObject(self.h_mu_all_eta_mid )
@@ -140,9 +154,10 @@ class TrigEffAnalysis(Module):
 	elif(dPhi <= -math.pi): dPhi = dPhi + 2 * math.pi
 	return abs(dPhi)
 
-    def SelIsotrack(self, isk, met):
+    def SelIsotrack_mu_tau(self, isk, met):
         iso = isk.pfRelIso03_chg
-        if abs(isk.pdgId) == 11 or abs(isk.pdgId) == 13:
+        #if abs(isk.pdgId) == 11 or abs(isk.pdgId) == 13:
+        if abs(isk.pdgId) == 13:
             if isk.pt < 5 or iso > 0.2:
                 return False
         if abs(isk.pdgId) == 211:
@@ -165,9 +180,18 @@ class TrigEffAnalysis(Module):
             return False
         return True
 
-    def SelJets(self, jet):
-        if jet.pt < 20 or math.fabs(jet.eta) > 2.4 :
-            return False
+    def PassJetID(self, jets):
+        jetIDs = [j.jetId & 0b010 for j in jets if j.pt > 30]
+        return (0 not in jetIDs)
+
+    def PassHEMVeto(self, jets, etalow, etahigh, philow, phihigh, ptcut):
+        # Calculating HEM veto for 2017 and 2018.
+        # Including 2017 in case we need to use 2017 MC for 2018 Data
+        #if self.era == "2016":
+        #    return True
+        for j in jets:
+            if (j.eta >= etalow and j.eta <= etahigh) and (j.phi >= philow and j.phi <= phihigh) and j.pt > ptcut:
+                return False
         return True
 
     def analyze(self, event):
@@ -175,9 +199,11 @@ class TrigEffAnalysis(Module):
 	if (self.maxEvents != -1 and self.nEvents > self.maxEvents):
 	    return False
 
-	deepCSV_cut = 0.4941
-	if(self.Year == "2016"): deepCSV_cut = 0.6324
+	deepCSV_cut = 0.6324	#mid WP for 2016 deepCSV
+	if self.Year == "2017": deepCSV_cut = 0.4941
+	if self.Year == "2018": deepCSV_cut = 0.4184
 
+        calomet   = Object(event, "CaloMET")
         met       = Object(event, "MET")
         hlt       = Object(event, "HLT")
         flags     = Object(event, "Flag")
@@ -230,25 +256,28 @@ class TrigEffAnalysis(Module):
 		if (zmumu_cand.M() > 81 and zmumu_cand.M() < 101):
 			zmumu_mid.append(zmumu_cand)
 
-	#n_tau = 0
-	#for isk in isks:
-	#	if (self.SelIsotrack(isk, met)): n_tau += 1
-
 	photon_loose = []
 	for photon in photons:
 		if (self.SelPhotons(photon)):
 			photon_loose.append(photon)
 	n_photon = len(photon_loose)
 
-        n_jets = 0 
-        ht = 0
+        n_jets = n_jets_RA2b = 0 
+        ht = ht_RA2b = 0
 	bjets = []
+	jet_phi = []
         for jet in jets:
-                ht = ht + jet.pt
-                if self.SelJets(jet):
-                        n_jets += 1
-                        if (jet.btagDeepB > deepCSV_cut):
-				bjets.append(jet)
+		if jet.pt > 20 and math.fabs(jet.eta) < 4.7:
+			jet_phi.append(jet.phi)
+			if math.fabs(jet.eta) < 2.4: 
+                        	n_jets += 1
+				ht = ht + jet.pt
+                        	if (jet.btagDeepB > deepCSV_cut):
+					bjets.append(jet)
+				if jet.pt > 30:
+                        		n_jets_RA2b += 1
+					ht_RA2b = ht_RA2b + jet.pt
+					
         n_bjets = len(bjets)
 
 	Mtb = float('inf')
@@ -280,38 +309,54 @@ class TrigEffAnalysis(Module):
 		and self.mygetattr(flags, 'eeBadScFilter', True)
 		)
 
+	PassCaloMETRatio = (met.pt / calomet.pt ) < 5 if calomet.pt > 0 else True
+
+	Pass_exHEMVeto30 = True
+	if (self.Year == '2018' and event['run'] >= 319077): Pass_exHEMVeto30 = self.PassHEMVeto(jets, -3.2, -1.2, -1.77, -0.67, 30)
+	#if not Pass_exHEMVeto30: print "veto HEM event"
+
+	pass_filter = pass_filter and self.PassJetID(jets) and PassCaloMETRatio and Pass_exHEMVeto30
+
 	pass_dPhi = False
 	pass_dPhi_highdm = False
-	if (n_jets == 2):
+	if (len(jet_phi) == 2):
 		if(self.Region == "signal"):
-			if (self.mydPhi(jets[0].phi, met.phi) > 0.5 and self.mydPhi(jets[1].phi, met.phi) > 0.15):
+			if (self.mydPhi(jet_phi[0], met.phi) > 0.5 and self.mydPhi(jet_phi[1], met.phi) > 0.15):
 				pass_dPhi = True
 		if(self.Region == "QCD"):
-			if (self.mydPhi(jets[0].phi, met.phi) < 0.1 or self.mydPhi(jets[1].phi, met.phi) < 0.1):
+			if (self.mydPhi(jet_phi[0], met.phi) < 0.1 or self.mydPhi(jet_phi[1], met.phi) < 0.1):
 				pass_dPhi = True
-	if (n_jets > 2):
+	if (len(jet_phi) >=3):
 		if(self.Region == "signal"):
-			if (self.mydPhi(jets[0].phi, met.phi) > 0.5 and self.mydPhi(jets[1].phi, met.phi) > 0.15 and self.mydPhi(jets[2].phi, met.phi) > 0.15):
+			if (self.mydPhi(jet_phi[0], met.phi) > 0.5 and self.mydPhi(jet_phi[1], met.phi) > 0.15 and self.mydPhi(jet_phi[2], met.phi) > 0.15):
 				pass_dPhi = True
 		if(self.Region == "QCD"):
-			if (self.mydPhi(jets[0].phi, met.phi) < 0.1 or self.mydPhi(jets[1].phi, met.phi) < 0.1 or self.mydPhi(jets[2].phi, met.phi) < 0.1):
+			if (self.mydPhi(jet_phi[0], met.phi) < 0.1 or self.mydPhi(jet_phi[1], met.phi) < 0.1 or self.mydPhi(jet_phi[2], met.phi) < 0.1):
 				pass_dPhi = True
-
-	if (n_jets >= 5):
-		if(self.Region == "signal"):
-			if (self.mydPhi(jets[0].phi, met.phi) > 0.5 and self.mydPhi(jets[1].phi, met.phi) > 0.5 and self.mydPhi(jets[2].phi, met.phi) > 0.5 and self.mydPhi(jets[3].phi, met.phi) > 0.5):
-				pass_dPhi_highdm = True
-		if(self.Region == "QCD"):
-			if (self.mydPhi(jets[0].phi, met.phi) < 0.1 or self.mydPhi(jets[1].phi, met.phi) < 0.1 or self.mydPhi(jets[2].phi, met.phi) < 0.1):
 				pass_dPhi_highdm = True
 
-	pass_loose_baseline = (pass_filter and pass_dPhi and ht > 300) 
-	pass_highdm = (pass_loose_baseline and pass_dPhi_highdm and n_bjets >= 1)
+	if (len(jet_phi) >=4):
+		if(self.Region == "signal"):
+			if (self.mydPhi(jet_phi[0], met.phi) > 0.5 and self.mydPhi(jet_phi[1], met.phi) > 0.5 and self.mydPhi(jet_phi[2], met.phi) > 0.5 and self.mydPhi(jet_phi[3], met.phi) > 0.5):
+				pass_dPhi_highdm = True
+
+	pass_loose_baseline = (pass_filter and n_jets >=2 and pass_dPhi and ht > 300) 
+	pass_highdm = (pass_loose_baseline and n_jets >=5 and pass_dPhi_highdm and n_bjets >= 1)
 	pass_lowdm = (pass_loose_baseline and Mtb < 175 and stop0l.nTop == 0 and stop0l.nW == 0
 	and stop0l.nResolved == 0 and stop0l.ISRJetPt > 300 and met.pt / math.sqrt(ht) > 10)
 
 	pass_loosejet = (pass_loose_baseline and pass_dPhi_highdm)
 	pass_looseb = (pass_loose_baseline and n_bjets >= 1)
+
+	##############         RA2b stuff             ###############
+	have_Isotrack_mu_tau = False
+	for isk in isks:
+		if self.SelIsotrack_mu_tau(isk, met): have_Isotrack_mu_tau = True
+
+	pass_baseline_RA2b_veto = (PassCaloMETRatio and n_ele_mid == 1 and have_Isotrack_mu_tau == False)
+	#pass_baseline_RA2b_jet = (n_jets_RA2b >=2 and ht_RA2b > 300 and pass_dPhi_highdm)
+	pass_baseline_RA2b_jet = (n_jets_RA2b >=2 and ht_RA2b > 300)
+	##############         RA2b stuff             ###############
 
 	pass_baseline = False
 	if(self.baseline == "loose_baseline"): pass_baseline = pass_loose_baseline
@@ -423,6 +468,8 @@ class TrigEffAnalysis(Module):
 	#or self.mygetattr(hlt, 'PFMET120_PFMHT120_IDTight_HFCleaned', False)
 	#or self.mygetattr(hlt, 'PFMET120_PFMHT120_IDTight_PFHT60_HFCleaned', False)
 	#or self.mygetattr(hlt, 'PFMETNoMu120_PFMHTNoMu120_IDTight_HFCleaned', False)
+	or self.mygetattr(hlt, 'CaloMET300_HBHECleaned', False)
+	or self.mygetattr(hlt, 'CaloMET350_HBHECleaned', False)
 	)
 
         sigAccept_mu = (
@@ -555,8 +602,14 @@ class TrigEffAnalysis(Module):
 	if (self.Dataset == "SingleElectron" and n_ele_mid >= 1):
 		if (n_mu == 0):
         		self.h_met_all_mid.Fill(met.pt)
+        		if pass_baseline_RA2b_veto:
+				self.h_met_all_mid_RA2b_veto.Fill(met.pt)
+        			if pass_baseline_RA2b_jet: self.h_met_all_mid_RA2b_jet.Fill(met.pt)
         		if (sigAccept_met):
 				self.h_met_passtrig_mid.Fill(met.pt)
+        			if pass_baseline_RA2b_veto:
+					self.h_met_passtrig_mid_RA2b_veto.Fill(met.pt)
+        				if pass_baseline_RA2b_jet: self.h_met_passtrig_mid_RA2b_jet.Fill(met.pt)
 			if (n_photon >=1):
         			self.h_photon_all_mid.Fill(photon_loose[0].pt)
         			if(photon_loose[0].pt > 200): self.h_photon_all_eta_mid.Fill(photon_loose[0].eta)
