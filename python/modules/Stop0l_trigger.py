@@ -12,15 +12,15 @@ class Stop0l_trigger(Module):
         self.maxEvents = -1
         self.nEvents = 0
         self.era = era
-	self.isData = isData
+        self.isData = isData
         eff_file = "%s/src/PhysicsTools/NanoSUSYTools/data/trigger_eff/" % os.environ['CMSSW_BASE']
         eff_file = eff_file + self.era + "_trigger_eff.root"
         self.tf = ROOT.TFile.Open(eff_file)
 
         ## Keep the TGraph in memory
         histo_name_list = ["MET_loose_baseline", "MET_high_dm", "MET_low_dm",
-			   "MET_loose_baseline_QCD", "MET_high_dm_QCD", "MET_low_dm_QCD",
-			   "Electron_pt", "Electron_eta", "Muon_pt", "Muon_eta", 
+                           "MET_loose_baseline_QCD", "MET_high_dm_QCD", "MET_low_dm_QCD",
+                           "Electron_pt", "Electron_eta", "Muon_pt", "Muon_eta", 
                            "Photon_pt", "Photon_eta", "Zmumu_pt", "Zee_pt"]
         self.effs = { }
         for histo_name in histo_name_list:
@@ -104,24 +104,24 @@ class Stop0l_trigger(Module):
         my_xrange = np.array([eff.GetX()[i] - eff.GetErrorXlow(i) for i in range(eff.GetN()) ])
         my_xrange = np.append(my_xrange, 99999)
         findbix = np.searchsorted(my_xrange, kinematic)-1
-	#print " my_xrange is ", my_xrange
+        #print " my_xrange is ", my_xrange
         if findbix == -1:
             return 0, 0, 0
         return eff.GetY()[findbix], eff.GetY()[findbix] - eff.GetErrorYlow(findbix), eff.GetY()[findbix] + eff.GetErrorYhigh(findbix)
 
     def analyze(self, event):
         """process event, return True (go to next module) or False (fail, go to next event)"""
-    	self.nEvents += 1
+        self.nEvents += 1
         if (self.maxEvents != -1 and self.nEvents > self.maxEvents):
             return False
 
         hlt       = Object(event, "HLT")
         met       = Object(event, "MET")
         electrons = Collection(event, "Electron")
-        muons	  = Collection(event, "Muon")
+        muons     = Collection(event, "Muon")
         photons   = Collection(event, "Photon")
 
-	if not self.isData: Pass_trigger_MET = True
+        if not self.isData: Pass_trigger_MET = True
         else: Pass_trigger_MET = (
             self.mygetattr(hlt, 'PFMET100_PFMHT100_IDTight', False)
             or self.mygetattr(hlt, 'PFMET110_PFMHT110_IDTight', False)
@@ -148,7 +148,7 @@ class Stop0l_trigger(Module):
             #or self.mygetattr(hlt, 'PFMETNoMu120_PFMHTNoMu120_IDTight_HFCleaned', False)
         )
 
-	if not self.isData: Pass_trigger_muon = True
+        if not self.isData: Pass_trigger_muon = True
         else: Pass_trigger_muon = (
             self.mygetattr(hlt, 'IsoMu20', False)
             or self.mygetattr(hlt, 'IsoMu22', False)
@@ -162,7 +162,7 @@ class Stop0l_trigger(Module):
             or self.mygetattr(hlt, 'Mu55', False)
         )
 
-	if not self.isData: Pass_trigger_electron = True
+        if not self.isData: Pass_trigger_electron = True
         else: Pass_trigger_electron = (
             self.mygetattr(hlt, 'Ele105_CaloIdVT_GsfTrkIdT', False)
             or self.mygetattr(hlt, 'Ele115_CaloIdVT_GsfTrkIdT', False)
@@ -183,108 +183,105 @@ class Stop0l_trigger(Module):
             or self.mygetattr(hlt, 'DoubleEle33_CaloIdL_MW', False)
         )
 
-	if not self.isData: Pass_trigger_photon = True
+        if not self.isData: Pass_trigger_photon = True
         else: Pass_trigger_photon = (
             self.mygetattr(hlt, 'Photon175', False)
             or self.mygetattr(hlt, 'Photon200', False)
         )
 
-	ele_veto = []
-	ele_mid = []
-	ele_tight = []
-	for ele in electrons:
-		if (ele.pt > 5 and abs(ele.eta) < 2.5 and ele.cutBasedNoIso >= 1 and ele.miniPFRelIso_all < 0.1):
-			ele_veto.append(ele)
-			if (ele.cutBasedNoIso >= 3):
-				ele_mid.append(ele)
-			if (ele.cutBasedNoIso >= 4):
-				ele_tight.append(ele)
-	n_ele = len(ele_veto)
-	n_ele_mid = len(ele_mid)
-	n_ele_tight = len(ele_tight)
+        ele_veto = []
+        ele_mid = []
+        ele_tight = []
+        for ele in electrons:
+                if (ele.pt > 5 and abs(ele.eta) < 2.5 and ele.cutBasedNoIso >= 1 and ele.miniPFRelIso_all < 0.1):
+                        ele_veto.append(ele)
+                        if (ele.cutBasedNoIso >= 3):
+                                ele_mid.append(ele)
+                        if (ele.cutBasedNoIso >= 4):
+                                ele_tight.append(ele)
+        n_ele = len(ele_veto)
+        n_ele_mid = len(ele_mid)
+        n_ele_tight = len(ele_tight)
 
-	zee_mid = []
-	if (n_ele_mid == 2 and ele_mid[0].pt > 40 and ele_mid[1].pt > 20 and (ele_mid[0].charge + ele_mid[1].charge) == 0):
-		zee_cand = ROOT.TLorentzVector()
-		zee_cand = ele_mid[0].p4() + ele_mid[1].p4()
-		#Z mass = 91 GeV
-		#print "zee_cand mass = ", zee_cand.M()
-		if (zee_cand.M() > 81 and zee_cand.M() < 101):
-			zee_mid.append(zee_cand)
-	n_zee = len(zee_mid)
-		
-	mu_loose = []
-	mu_mid = []
-	for mu in muons:
-		if (mu.pt > 5 and abs(mu.eta) < 2.4 and mu.miniPFRelIso_all < 0.2):
-			mu_loose.append(mu)
-			if (mu.mediumId):
-				mu_mid.append(mu)
-	n_mu = len(mu_loose)
-	n_mu_mid = len(mu_mid)
+        zee_mid = []
+        if (n_ele_mid == 2 and ele_mid[0].pt > 40 and ele_mid[1].pt > 20 and (ele_mid[0].charge + ele_mid[1].charge) == 0):
+                zee_cand = ROOT.TLorentzVector()
+                zee_cand = ele_mid[0].p4() + ele_mid[1].p4()
+                #Z mass = 91 GeV
+                #print "zee_cand mass = ", zee_cand.M()
+                if (zee_cand.M() > 81 and zee_cand.M() < 101):
+                        zee_mid.append(zee_cand)
+        n_zee = len(zee_mid)
+                
+        mu_loose = []
+        mu_mid = []
+        for mu in muons:
+                if (mu.pt > 5 and abs(mu.eta) < 2.4 and mu.miniPFRelIso_all < 0.2):
+                        mu_loose.append(mu)
+                        if (mu.mediumId):
+                                mu_mid.append(mu)
+        n_mu = len(mu_loose)
+        n_mu_mid = len(mu_mid)
 
-	zmumu_mid = []
-	if (n_mu_mid == 2 and mu_mid[0].pt > 50 and mu_mid[1].pt > 20 and (mu_mid[0].charge + mu_mid[1].charge) == 0):
-		zmumu_cand = ROOT.TLorentzVector()
-		zmumu_cand = mu_mid[0].p4() + mu_mid[1].p4()
-		#Z mass = 91 GeV
-		#print "zmumu_cand mass = ", zmumu_cand.M()
-		if (zmumu_cand.M() > 81 and zmumu_cand.M() < 101):
-			zmumu_mid.append(zmumu_cand)
-	n_zmumu = len(zmumu_mid)
+        zmumu_mid = []
+        if (n_mu_mid == 2 and mu_mid[0].pt > 50 and mu_mid[1].pt > 20 and (mu_mid[0].charge + mu_mid[1].charge) == 0):
+                zmumu_cand = ROOT.TLorentzVector()
+                zmumu_cand = mu_mid[0].p4() + mu_mid[1].p4()
+                #Z mass = 91 GeV
+                #print "zmumu_cand mass = ", zmumu_cand.M()
+                if (zmumu_cand.M() > 81 and zmumu_cand.M() < 101):
+                        zmumu_mid.append(zmumu_cand)
+        n_zmumu = len(zmumu_mid)
 
         photon_loose = []
         photon_mid = []
         for photon in photons:
-                if (abs(photon.eta) < 1.442 or (1.566 < abs(photon.eta) and abs(photon.eta) < 2.5)):
-                        #cutbase =  photon.cutBasedBitmap if self.era != "2016" else photon.cutBased
-                        #if(cutbase >=1):
-                        #        photon_loose.append(photon)
-                        #if(cutbase >=2):
-                        #        photon_mid.append(photon)
-			if self.era == "2016":
-				if photon.cutBased >=1: photon_loose.append(photon)
-				if photon.cutBased >=2: photon_mid.append(photon)
-			else:
-				if bool(photon.cutBasedBitmap & 1): photon_loose.append(photon)
-				if bool(photon.cutBasedBitmap & 2): photon_mid.append(photon)
+                # CMSSW Reference for eta cuts: https://github.com/cms-sw/cmssw/blob/02d4198c0b6615287fd88e9a8ff650aea994412e/DQM/Physics/python/singleTopDQM_miniAOD_cfi.py#L47
+                abeta = math.fabs(photon.eta)
+                if (abeta > 1.4442 and abeta < 1.5660) or (abeta > 2.5):
+                        if self.era == "2016":
+                                if photon.cutBased >=1: photon_loose.append(photon)
+                                if photon.cutBased >=2: photon_mid.append(photon)
+                        else:
+                                if bool(photon.cutBasedBitmap & 1): photon_loose.append(photon)
+                                if bool(photon.cutBasedBitmap & 2): photon_mid.append(photon)
         n_photon = len(photon_loose)
         n_photon_mid = len(photon_mid)
 
-	MET_trigger_eff_loose_baseline = MET_trigger_eff_loose_baseline_down = MET_trigger_eff_loose_baseline_up = 0
-	MET_trigger_eff_high_dm = MET_trigger_eff_high_dm_down = MET_trigger_eff_high_dm_up = 0
-	MET_trigger_eff_low_dm = MET_trigger_eff_low_dm_down = MET_trigger_eff_low_dm_up = 0
-	MET_trigger_eff_loose_baseline_QCD = MET_trigger_eff_loose_baseline_QCD_down = MET_trigger_eff_loose_baseline_QCD_up = 0
-	MET_trigger_eff_high_dm_QCD = MET_trigger_eff_high_dm_QCD_down = MET_trigger_eff_high_dm_QCD_up = 0
-	MET_trigger_eff_low_dm_QCD = MET_trigger_eff_low_dm_QCD_down = MET_trigger_eff_low_dm_QCD_up = 0
+        MET_trigger_eff_loose_baseline = MET_trigger_eff_loose_baseline_down = MET_trigger_eff_loose_baseline_up = 0
+        MET_trigger_eff_high_dm = MET_trigger_eff_high_dm_down = MET_trigger_eff_high_dm_up = 0
+        MET_trigger_eff_low_dm = MET_trigger_eff_low_dm_down = MET_trigger_eff_low_dm_up = 0
+        MET_trigger_eff_loose_baseline_QCD = MET_trigger_eff_loose_baseline_QCD_down = MET_trigger_eff_loose_baseline_QCD_up = 0
+        MET_trigger_eff_high_dm_QCD = MET_trigger_eff_high_dm_QCD_down = MET_trigger_eff_high_dm_QCD_up = 0
+        MET_trigger_eff_low_dm_QCD = MET_trigger_eff_low_dm_QCD_down = MET_trigger_eff_low_dm_QCD_up = 0
 
-	if (met.pt > 100):
-		MET_trigger_eff_loose_baseline, MET_trigger_eff_loose_baseline_down, MET_trigger_eff_loose_baseline_up = self.get_efficiency("MET_loose_baseline", met.pt)
-		MET_trigger_eff_high_dm, MET_trigger_eff_high_dm_down, MET_trigger_eff_high_dm_up = self.get_efficiency("MET_high_dm", met.pt)
-		MET_trigger_eff_low_dm, MET_trigger_eff_low_dm_down, MET_trigger_eff_low_dm_up = self.get_efficiency("MET_low_dm", met.pt)
-		MET_trigger_eff_loose_baseline_QCD, MET_trigger_eff_loose_baseline_QCD_down, MET_trigger_eff_loose_baseline_QCD_up = self.get_efficiency("MET_loose_baseline_QCD", met.pt)
-		MET_trigger_eff_high_dm_QCD, MET_trigger_eff_high_dm_QCD_down, MET_trigger_eff_high_dm_QCD_up = self.get_efficiency("MET_high_dm_QCD", met.pt)
-		MET_trigger_eff_low_dm_QCD, MET_trigger_eff_low_dm_QCD_down, MET_trigger_eff_low_dm_QCD_up = self.get_efficiency("MET_low_dm_QCD", met.pt)
+        if (met.pt > 100):
+                MET_trigger_eff_loose_baseline, MET_trigger_eff_loose_baseline_down, MET_trigger_eff_loose_baseline_up = self.get_efficiency("MET_loose_baseline", met.pt)
+                MET_trigger_eff_high_dm, MET_trigger_eff_high_dm_down, MET_trigger_eff_high_dm_up = self.get_efficiency("MET_high_dm", met.pt)
+                MET_trigger_eff_low_dm, MET_trigger_eff_low_dm_down, MET_trigger_eff_low_dm_up = self.get_efficiency("MET_low_dm", met.pt)
+                MET_trigger_eff_loose_baseline_QCD, MET_trigger_eff_loose_baseline_QCD_down, MET_trigger_eff_loose_baseline_QCD_up = self.get_efficiency("MET_loose_baseline_QCD", met.pt)
+                MET_trigger_eff_high_dm_QCD, MET_trigger_eff_high_dm_QCD_down, MET_trigger_eff_high_dm_QCD_up = self.get_efficiency("MET_high_dm_QCD", met.pt)
+                MET_trigger_eff_low_dm_QCD, MET_trigger_eff_low_dm_QCD_down, MET_trigger_eff_low_dm_QCD_up = self.get_efficiency("MET_low_dm_QCD", met.pt)
 
-	Electron_trigger_eff_pt = Electron_trigger_eff_pt_down = Electron_trigger_eff_pt_up = 0
-	if (n_ele_mid >=1): Electron_trigger_eff_pt, Electron_trigger_eff_pt_down, Electron_trigger_eff_pt_up = self.get_efficiency("Electron_pt", ele_mid[0].pt)
-	Electron_trigger_eff_eta = Electron_trigger_eff_eta_down = Electron_trigger_eff_eta_up = 0
-	if (n_ele_mid >=1): Electron_trigger_eff_eta, Electron_trigger_eff_eta_down, Electron_trigger_eff_eta_up = self.get_efficiency("Electron_eta", ele_mid[0].eta)
+        Electron_trigger_eff_pt = Electron_trigger_eff_pt_down = Electron_trigger_eff_pt_up = 0
+        if (n_ele_mid >=1): Electron_trigger_eff_pt, Electron_trigger_eff_pt_down, Electron_trigger_eff_pt_up = self.get_efficiency("Electron_pt", ele_mid[0].pt)
+        Electron_trigger_eff_eta = Electron_trigger_eff_eta_down = Electron_trigger_eff_eta_up = 0
+        if (n_ele_mid >=1): Electron_trigger_eff_eta, Electron_trigger_eff_eta_down, Electron_trigger_eff_eta_up = self.get_efficiency("Electron_eta", ele_mid[0].eta)
 
-	Muon_trigger_eff_pt = Muon_trigger_eff_pt_down = Muon_trigger_eff_pt_up = 0
-	if (n_mu_mid >=1): Muon_trigger_eff_pt, Muon_trigger_eff_pt_down, Muon_trigger_eff_pt_up = self.get_efficiency("Muon_pt", mu_mid[0].pt)
-	Muon_trigger_eff_eta = Muon_trigger_eff_eta_down = Muon_trigger_eff_eta_up = 0
-	if (n_mu_mid >=1): Muon_trigger_eff_eta, Muon_trigger_eff_eta_down, Muon_trigger_eff_eta_up = self.get_efficiency("Muon_eta", mu_mid[0].eta)
+        Muon_trigger_eff_pt = Muon_trigger_eff_pt_down = Muon_trigger_eff_pt_up = 0
+        if (n_mu_mid >=1): Muon_trigger_eff_pt, Muon_trigger_eff_pt_down, Muon_trigger_eff_pt_up = self.get_efficiency("Muon_pt", mu_mid[0].pt)
+        Muon_trigger_eff_eta = Muon_trigger_eff_eta_down = Muon_trigger_eff_eta_up = 0
+        if (n_mu_mid >=1): Muon_trigger_eff_eta, Muon_trigger_eff_eta_down, Muon_trigger_eff_eta_up = self.get_efficiency("Muon_eta", mu_mid[0].eta)
 
-	Photon_trigger_eff_pt = Photon_trigger_eff_pt_down = Photon_trigger_eff_pt_up = 0
-	if (n_photon_mid >=1): Photon_trigger_eff_pt, Photon_trigger_eff_pt_down, Photon_trigger_eff_pt_up = self.get_efficiency("Photon_pt", photon_mid[0].pt)
-	Photon_trigger_eff_eta = Photon_trigger_eff_eta_down = Photon_trigger_eff_eta_up = 0
-	if (n_photon_mid >=1): Photon_trigger_eff_eta, Photon_trigger_eff_eta_down, Photon_trigger_eff_eta_up = self.get_efficiency("Photon_eta", photon_mid[0].eta)
+        Photon_trigger_eff_pt = Photon_trigger_eff_pt_down = Photon_trigger_eff_pt_up = 0
+        if (n_photon_mid >=1): Photon_trigger_eff_pt, Photon_trigger_eff_pt_down, Photon_trigger_eff_pt_up = self.get_efficiency("Photon_pt", photon_mid[0].pt)
+        Photon_trigger_eff_eta = Photon_trigger_eff_eta_down = Photon_trigger_eff_eta_up = 0
+        if (n_photon_mid >=1): Photon_trigger_eff_eta, Photon_trigger_eff_eta_down, Photon_trigger_eff_eta_up = self.get_efficiency("Photon_eta", photon_mid[0].eta)
 
-	Zee_trigger_eff_pt = Zee_trigger_eff_pt_down = Zee_trigger_eff_pt_up = 0
-	if (n_zee ==1): Zee_trigger_eff_pt, Zee_trigger_eff_pt_down, Zee_trigger_eff_pt_up = self.get_efficiency("Zee_pt", zee_mid[0].Pt())
-	Zmumu_trigger_eff_pt = Zmumu_trigger_eff_pt_down = Zmumu_trigger_eff_pt_up = 0
-	if (n_zmumu ==1): Zmumu_trigger_eff_pt, Zmumu_trigger_eff_pt_down, Zmumu_trigger_eff_pt_up = self.get_efficiency("Zmumu_pt", zmumu_mid[0].Pt())
+        Zee_trigger_eff_pt = Zee_trigger_eff_pt_down = Zee_trigger_eff_pt_up = 0
+        if (n_zee ==1): Zee_trigger_eff_pt, Zee_trigger_eff_pt_down, Zee_trigger_eff_pt_up = self.get_efficiency("Zee_pt", zee_mid[0].Pt())
+        Zmumu_trigger_eff_pt = Zmumu_trigger_eff_pt_down = Zmumu_trigger_eff_pt_up = 0
+        if (n_zmumu ==1): Zmumu_trigger_eff_pt, Zmumu_trigger_eff_pt_down, Zmumu_trigger_eff_pt_up = self.get_efficiency("Zmumu_pt", zmumu_mid[0].Pt())
 
         ### Store output
         self.out.fillBranch("Pass_trigger_MET", Pass_trigger_MET)
