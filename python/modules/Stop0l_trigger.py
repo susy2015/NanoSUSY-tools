@@ -238,7 +238,7 @@ class Stop0l_trigger(Module):
         for photon in photons:
                 # CMSSW Reference for eta cuts: https://github.com/cms-sw/cmssw/blob/02d4198c0b6615287fd88e9a8ff650aea994412e/DQM/Physics/python/singleTopDQM_miniAOD_cfi.py#L47
                 abeta = math.fabs(photon.eta)
-                if (abeta > 1.4442 and abeta < 1.5660) or (abeta > 2.5):
+                if (abeta < 1.4442 or (1.5660 > abeta and abeta < 2.5)):
                         if self.era == "2016":
                                 if photon.cutBased >=1: photon_loose.append(photon)
                                 if photon.cutBased >=2: photon_mid.append(photon)
