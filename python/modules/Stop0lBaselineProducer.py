@@ -39,6 +39,7 @@ class Stop0lBaselineProducer(Module):
         self.out.branch("Pass_JetID"         + self.suffix, "O")
         self.out.branch("Pass_CaloMETRatio"  + self.suffix, "O", title="ICHEP16 Filter: pfMET/CaloMET < 5")
         self.out.branch("Pass_EventFilter"   + self.suffix, "O")
+        self.out.branch("MHTphi"             + self.suffix, "O")
         self.out.branch("Pass_LowNeutralJetFilter" + self.suffix, "O")
         self.out.branch("Pass_MuonJetFilter" + self.suffix, "O")
         self.out.branch("Pass_ECalNoiseJetFilter" + self.suffix, "O")
@@ -118,13 +119,15 @@ class Stop0lBaselineProducer(Module):
 
         return passEventFilter
 
-    def PassLowNeutralJetFilter(self, jets):
+    def MHTphi(self, jets):
         MHTx, MHTy = -sum(array([[jet.pt * cos(jet.phi), jet.pt * sin(jet.phi)]
                                  for jet in jets
                                  if ((jet.pt >= 20) and
                                      (abs(jet.eta) <= 2.4) and
                                      ((jet.jetId & 0b010) == 0b010))]), axis=0)
-        MHTphi = arctan2(MHTy, MHTx)
+        return arctan2(MHTy, MHTx)
+
+    def PassLowNeutralJetFilter(self, jets, MHTphi):
         for jet in jets:
             if ((jet.pt >= 20) and
                 (abs(jet.eta) <= 2.4) and
@@ -145,14 +148,7 @@ class Stop0lBaselineProducer(Module):
                 return False
             return True
 
-    def PassECalNoiseJetFilter(self, jets):
-        MHTx, MHTy = -sum(array([[jet.pt * cos(jet.phi), jet.pt * sin(jet.phi)]
-                                 for jet in jets
-                                 if ((jet.pt >= 20) and
-                                     (abs(jet.eta) <= 2.4) and
-                                     ((jet.jetId & 0b010) == 0b010))]), axis=0)
-        MHTphi = arctan2(MHTy, MHTx)
-
+    def PassECalNoiseJetFilter(self, jets, MHTphi):
         # Find the two leading jets with pt >= 250 and eta between 2.4 and 5
         j1 = None
         j2 = None
@@ -178,14 +174,7 @@ class Stop0lBaselineProducer(Module):
                 ((j2 is None) or
                  ((j2.cosdPhiMHT < cos(0.1)) and (j1.cosdPhiMHT > cos(2.6)))))
 
-    def PassHTRatioDPhiTightFilter(self, jets):
-        MHTx, MHTy = -sum(array([[jet.pt * cos(jet.phi), jet.pt * sin(jet.phi)]
-                                 for jet in jets
-                                 if ((jet.pt >= 20) and
-                                     (abs(jet.eta) <= 2.4) and
-                                     ((jet.jetId & 0b010) == 0b010))]), axis=0)
-
-        MHTphi = arctan2(MHTy, MHTx)
+    def PassHTRatioDPhiTightFilter(self, jets, MHTphi):
         HT5 = 0.
         HT24 = 0.
         leadjet = None
@@ -294,10 +283,11 @@ class Stop0lBaselineProducer(Module):
         PassEventFilter = self.PassEventFilter(flags)
 
         # Additional event filters
-        PassLowNeutralJetFilter = self.PassLowNeutralJetFilter(jets)
+        MHTphi = self.MHTphi(jets)
+        PassLowNeutralJetFilter = self.PassLowNeutralJetFilter(jets, MHTphi)
         PassMuonJetFilter = self.PassMuonJetFilter(jets)
-        PassECalNoiseJetFilter = self.PassECalNoiseJetFilter(jets)
-        PassHTRatioDPhiTightFilter = self.PassHTRatioDPhiTightFilter(jets)
+        PassECalNoiseJetFilter = self.PassECalNoiseJetFilter(jets, MHTphi)
+        PassHTRatioDPhiTightFilter = self.PassHTRatioDPhiTightFilter(jets, MHTphi)
 
         countEle, countMu, countIsk, countTauPOG = self.calculateNLeptons(electrons, muons, isotracks, taus)
         PassElecVeto   = countEle == 0
@@ -341,6 +331,7 @@ class Stop0lBaselineProducer(Module):
         ### Store output
         self.out.fillBranch("Pass_JetID"         + self.suffix, PassJetID)
         self.out.fillBranch("Pass_CaloMETRatio"  + self.suffix, PassCaloMETRatio)
+        self.out.fillBranch("MHTphi"             + self.suffix, MHTphi)
         self.out.fillBranch("Pass_LowNeutralJetFilter" + self.suffix, PassLowNeutralJetFilter)
         self.out.fillBranch("Pass_MuonJetFilter" + self.suffix, PassMuonJetFilter)
         self.out.fillBranch("Pass_ECalNoiseJetFilter" + self.suffix, PassECalNoiseJetFilter)
