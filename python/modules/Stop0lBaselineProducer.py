@@ -39,6 +39,7 @@ class Stop0lBaselineProducer(Module):
         self.out.branch("Pass_JetID"         + self.suffix, "O")
         self.out.branch("Pass_CaloMETRatio"  + self.suffix, "O", title="ICHEP16 Filter: pfMET/CaloMET < 5")
         self.out.branch("Pass_EventFilter"   + self.suffix, "O")
+        self.out.branch("Pass_LowNeutralJetFilter" + self.suffix, "O")
         self.out.branch("Pass_ElecVeto"      + self.suffix, "O")
         self.out.branch("Pass_MuonVeto"      + self.suffix, "O")
         self.out.branch("Pass_IsoTrkVeto"    + self.suffix, "O")
@@ -79,7 +80,7 @@ class Stop0lBaselineProducer(Module):
         countEle = sum([e.Stop0l for e in eles])
         countMu  = sum([m.Stop0l for m in muons])
         countIsk = sum([i.Stop0l for i in isks])
-	countTau = sum([t.Stop0l for t in taus])
+        countTau = sum([t.Stop0l for t in taus])
         return countEle, countMu, countIsk, countTau
 
     def PassEventFilter(self, flags):
@@ -113,6 +114,23 @@ class Stop0lBaselineProducer(Module):
                 passEventFilter = passEventFilter and flags.globalSuperTightHalo2016Filter
 
         return passEventFilter
+
+    def PassLowNeutralJetFilter(self, jets):
+        MHTx, MHTy = -sum(array([[jet.pt * cos(jet.phi), jet.pt * sin(jet.phi)]
+                                 for jet in jets
+                                 if ((jet.pt >= 20) and
+                                     (abs(jet.eta) <= 2.4) and
+                                     ((jet.jetId & 0b010) == 0b010))]), axis=0)
+        MHTphi = arctan2(MHTy, MHTx)
+        for jet in jets:
+            if ((jet.pt >= 20) and
+                (abs(jet.eta) <= 2.4) and
+                ((jet.jetId & 0b010) == 0b010) and
+                (jet.neEmEF < 0.03)):
+                cosdphi = (cos(MHTphi)*cos(jet.phi) + sin(MHTphi)*sin(jet.phi))
+                if (cosdphi < cos(pi - 0.4)):
+                    return False
+        return True
 
     def PassJetID(self, jets):
         # In case of fastsim, it has been observed with lower efficiency
@@ -203,6 +221,9 @@ class Stop0lBaselineProducer(Module):
         PassCaloMETRatio= (met.pt / caloMET.pt ) < 5 if caloMET.pt > 0 else True
         PassEventFilter = self.PassEventFilter(flags)
 
+        # Additional event filters
+        PassLowNeutralJetFilter = self.PassLowNeutralJetFilter(jets)
+
         countEle, countMu, countIsk, countTauPOG = self.calculateNLeptons(electrons, muons, isotracks, taus)
         PassElecVeto   = countEle == 0
         PassMuonVeto   = countMu == 0
@@ -245,6 +266,7 @@ class Stop0lBaselineProducer(Module):
         ### Store output
         self.out.fillBranch("Pass_JetID"         + self.suffix, PassJetID)
         self.out.fillBranch("Pass_CaloMETRatio"  + self.suffix, PassCaloMETRatio)
+        self.out.fillBranch("Pass_LowNeutralJetFilter" + self.suffix, PassLowNeutralJetFilter)
         self.out.fillBranch("Pass_EventFilter"   + self.suffix, PassEventFilter)
         self.out.fillBranch("Pass_ElecVeto"      + self.suffix, PassElecVeto)
         self.out.fillBranch("Pass_MuonVeto"      + self.suffix, PassMuonVeto)
