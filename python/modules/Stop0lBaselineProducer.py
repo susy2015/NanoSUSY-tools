@@ -40,6 +40,7 @@ class Stop0lBaselineProducer(Module):
         self.out.branch("Pass_CaloMETRatio"  + self.suffix, "O", title="ICHEP16 Filter: pfMET/CaloMET < 5")
         self.out.branch("Pass_EventFilter"   + self.suffix, "O")
         self.out.branch("Pass_LowNeutralJetFilter" + self.suffix, "O")
+        self.out.branch("Pass_MuonJetFilter" + self.suffix, "O")
         self.out.branch("Pass_ElecVeto"      + self.suffix, "O")
         self.out.branch("Pass_MuonVeto"      + self.suffix, "O")
         self.out.branch("Pass_IsoTrkVeto"    + self.suffix, "O")
@@ -132,6 +133,16 @@ class Stop0lBaselineProducer(Module):
                     return False
         return True
 
+    def PassMuonJetFilter(self, jets):
+        for jet in jets:
+            if ((jet.pt >= 200) and
+                (abs(jet.eta) <= 2.4) and
+                ((jet.jetId & 0b010) == 0b010) and
+                (jet.dPhiMET > (pi - 0.4)) and
+                (jet.muEF > 0.5)):
+                return False
+            return True
+
     def PassJetID(self, jets):
         # In case of fastsim, it has been observed with lower efficiency
         # https://hypernews.cern.ch/HyperNews/CMS/get/jet-algorithms/379.html
@@ -223,6 +234,7 @@ class Stop0lBaselineProducer(Module):
 
         # Additional event filters
         PassLowNeutralJetFilter = self.PassLowNeutralJetFilter(jets)
+        PassMuonJetFilter = self.PassMuonJetFilter(jets)
 
         countEle, countMu, countIsk, countTauPOG = self.calculateNLeptons(electrons, muons, isotracks, taus)
         PassElecVeto   = countEle == 0
@@ -267,6 +279,7 @@ class Stop0lBaselineProducer(Module):
         self.out.fillBranch("Pass_JetID"         + self.suffix, PassJetID)
         self.out.fillBranch("Pass_CaloMETRatio"  + self.suffix, PassCaloMETRatio)
         self.out.fillBranch("Pass_LowNeutralJetFilter" + self.suffix, PassLowNeutralJetFilter)
+        self.out.fillBranch("Pass_MuonJetFilter" + self.suffix, PassMuonJetFilter)
         self.out.fillBranch("Pass_EventFilter"   + self.suffix, PassEventFilter)
         self.out.fillBranch("Pass_ElecVeto"      + self.suffix, PassElecVeto)
         self.out.fillBranch("Pass_MuonVeto"      + self.suffix, PassMuonVeto)
