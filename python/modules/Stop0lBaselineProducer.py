@@ -119,17 +119,17 @@ class Stop0lBaselineProducer(Module):
 
         return passEventFilter
 
-    def MHTphi(self, jets):
+    def MHTphi(self, jets, ptcut):
         MHTx, MHTy = -sum(array([[jet.pt * cos(jet.phi), jet.pt * sin(jet.phi)]
                                  for jet in jets
-                                 if ((jet.pt >= 20) and
+                                 if ((jet.pt >= ptcut) and
                                      (abs(jet.eta) <= 2.4) and
                                      ((jet.jetId & 0b010) == 0b010))]), axis=0)
         return arctan2(MHTy, MHTx)
 
-    def PassLowNeutralJetFilter(self, jets, MHTphi):
+    def PassLowNeutralJetFilter(self, jets, MHTphi, ptcut):
         for jet in jets:
-            if ((jet.pt >= 20) and
+            if ((jet.pt >= ptcut) and
                 (abs(jet.eta) <= 2.4) and
                 ((jet.jetId & 0b010) == 0b010) and
                 (jet.neEmEF < 0.03)):
@@ -174,12 +174,12 @@ class Stop0lBaselineProducer(Module):
                 ((j2 is None) or
                  ((j2.cosdPhiMHT < cos(0.1)) and (j1.cosdPhiMHT > cos(2.6)))))
 
-    def PassHTRatioDPhiTightFilter(self, jets, MHTphi):
+    def PassHTRatioDPhiTightFilter(self, jets, MHTphi, ptcut):
         HT5 = 0.
         HT24 = 0.
         leadjet = None
         for jet in jets:
-            if ((jet.pt >= 20) and
+            if ((jet.pt >= ptcut) and
                 (abs(jet.eta) <= 5) and
                 ((jet.jetId & 0b010) == 0b010)):
                 HT5 += jet.pt
@@ -283,11 +283,11 @@ class Stop0lBaselineProducer(Module):
         PassEventFilter = self.PassEventFilter(flags)
 
         # Additional event filters
-        MHTphi = self.MHTphi(jets)
-        PassLowNeutralJetFilter = self.PassLowNeutralJetFilter(jets, MHTphi)
+        MHTphi = self.MHTphi(jets, ptcut=20)
+        PassLowNeutralJetFilter = self.PassLowNeutralJetFilter(jets, MHTphi, ptcut=20)
         PassMuonJetFilter = self.PassMuonJetFilter(jets)
         PassECalNoiseJetFilter = self.PassECalNoiseJetFilter(jets, MHTphi)
-        PassHTRatioDPhiTightFilter = self.PassHTRatioDPhiTightFilter(jets, MHTphi)
+        PassHTRatioDPhiTightFilter = self.PassHTRatioDPhiTightFilter(jets, MHTphi, ptcut=20)
 
         countEle, countMu, countIsk, countTauPOG = self.calculateNLeptons(electrons, muons, isotracks, taus)
         PassElecVeto   = countEle == 0
