@@ -41,6 +41,7 @@ class Stop0lBaselineProducer(Module):
         self.out.branch("Pass_EventFilter"   + self.suffix, "O")
         self.out.branch("Pass_LowNeutralJetFilter" + self.suffix, "O")
         self.out.branch("Pass_MuonJetFilter" + self.suffix, "O")
+        self.out.branch("Pass_ECalNoiseJetFilter" + self.suffix, "O")
         self.out.branch("Pass_ElecVeto"      + self.suffix, "O")
         self.out.branch("Pass_MuonVeto"      + self.suffix, "O")
         self.out.branch("Pass_IsoTrkVeto"    + self.suffix, "O")
@@ -143,6 +144,39 @@ class Stop0lBaselineProducer(Module):
                 return False
             return True
 
+    def PassECalNoiseJetFilter(self, jets):
+        MHTx, MHTy = -sum(array([[jet.pt * cos(jet.phi), jet.pt * sin(jet.phi)]
+                                 for jet in jets
+                                 if ((jet.pt >= 20) and
+                                     (abs(jet.eta) <= 2.4) and
+                                     ((jet.jetId & 0b010) == 0b010))]), axis=0)
+        MHTphi = arctan2(MHTy, MHTx)
+
+        # Find the two leading jets with pt >= 250 and eta between 2.4 and 5
+        j1 = None
+        j2 = None
+        for jet in jets:
+            if ((jet.pt >= 250) and
+                (abs(jet.eta) > 2.4) and
+                (abs(jet.eta) <= 5) and
+                ((jet.jetId & 0b010) == 0b010):
+                if ((j1 is None) or
+                    (jet.pt > j1.pt) or
+                    ((jet.pt == j1.pt) and (abs(jet.eta) < abs(j1.eta)))):
+                    j2 = j1
+                    j1 = jet
+                    j1.cosdPhiMHT = cos(MHTphi)*cos(jet.phi) + sin(MHTphi)*sin(jet.phi)
+                elif ((j2 is None) or
+                      (jet.pt > j2.pt) or
+                      ((jet.pt == j2.pt) and (abs(jet.eta) < abs(j2.eta)))):
+                    j2 = jet
+                    j2.cosdPhiMHT = cos(MHTphi)*cos(jet.phi) + sin(MHTphi)*sin(jet.phi)
+
+        return (((j1 is None) or
+                 ((j1.cosdPhiMHT < cos(0.1)) and (j1.cosdPhiMHT > cos(2.6))))
+                ((j2 is None) or
+                 ((j2.cosdPhiMHT < cos(0.1)) and (j1.cosdPhiMHT > cos(2.6)))))
+
     def PassJetID(self, jets):
         # In case of fastsim, it has been observed with lower efficiency
         # https://hypernews.cern.ch/HyperNews/CMS/get/jet-algorithms/379.html
@@ -235,6 +269,7 @@ class Stop0lBaselineProducer(Module):
         # Additional event filters
         PassLowNeutralJetFilter = self.PassLowNeutralJetFilter(jets)
         PassMuonJetFilter = self.PassMuonJetFilter(jets)
+        PassECalNoiseJetFilter = self.PassECalNoiseJetFilter(jets)
 
         countEle, countMu, countIsk, countTauPOG = self.calculateNLeptons(electrons, muons, isotracks, taus)
         PassElecVeto   = countEle == 0
@@ -280,6 +315,7 @@ class Stop0lBaselineProducer(Module):
         self.out.fillBranch("Pass_CaloMETRatio"  + self.suffix, PassCaloMETRatio)
         self.out.fillBranch("Pass_LowNeutralJetFilter" + self.suffix, PassLowNeutralJetFilter)
         self.out.fillBranch("Pass_MuonJetFilter" + self.suffix, PassMuonJetFilter)
+        self.out.fillBranch("Pass_ECalNoiseJetFilter" + self.suffix, PassECalNoiseJetFilter)
         self.out.fillBranch("Pass_EventFilter"   + self.suffix, PassEventFilter)
         self.out.fillBranch("Pass_ElecVeto"      + self.suffix, PassElecVeto)
         self.out.fillBranch("Pass_MuonVeto"      + self.suffix, PassMuonVeto)
