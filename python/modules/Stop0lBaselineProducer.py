@@ -128,15 +128,21 @@ class Stop0lBaselineProducer(Module):
         return arctan2(MHTy, MHTx)
 
     def PassLowNeutralJetFilter(self, jets, MHTphi, ptcut):
+        leadjet = None
         for jet in jets:
             if ((jet.pt >= ptcut) and
                 (abs(jet.eta) <= 2.4) and
-                ((jet.jetId & 0b010) == 0b010) and
-                (jet.neEmEF < 0.03)):
-                cosdphi = (cos(MHTphi)*cos(jet.phi) + sin(MHTphi)*sin(jet.phi))
-                if (cosdphi < cos(pi - 0.4)):
-                    return False
-        return True
+                ((jet.jetId & 0b010) == 0b010)):
+                if ((leadjet is None) or
+                    (jet.pt > leadjet.pt) or
+                    ((jet.pt == leadjet.pt) and (abs(jet.eta) < abs(leadjet.eta)))):
+                    leadjet = jet
+
+        if (leadjet is not None):
+            leadjet.cosdphi = cos(MHTphi)*cos(leadjet.phi) + sin(MHTphi)*sin(leadjet.phi)
+
+        return ((leadjet is None) or
+                ((leadjet.neEmEF < 0.03) and (leadjet.cosdphi < cos(pi - 0.4))))
 
     def PassMuonJetFilter(self, jets):
         for jet in jets:
@@ -162,15 +168,18 @@ class Stop0lBaselineProducer(Module):
                     ((jet.pt == j1.pt) and (abs(jet.eta) < abs(j1.eta)))):
                     j2 = j1
                     j1 = jet
-                    j1.cosdPhiMHT = cos(MHTphi)*cos(jet.phi) + sin(MHTphi)*sin(jet.phi)
                 elif ((j2 is None) or
                       (jet.pt > j2.pt) or
                       ((jet.pt == j2.pt) and (abs(jet.eta) < abs(j2.eta)))):
                     j2 = jet
-                    j2.cosdPhiMHT = cos(MHTphi)*cos(jet.phi) + sin(MHTphi)*sin(jet.phi)
+
+        if (j1 is not None):
+            j1.cosdPhiMHT = cos(MHTphi)*cos(j1.phi) + sin(MHTphi)*sin(j1.phi)
+        if (j2 is not None):
+            j2.cosdPhiMHT = cos(MHTphi)*cos(j2.phi) + sin(MHTphi)*sin(j2.phi)
 
         return (((j1 is None) or
-                 ((j1.cosdPhiMHT < cos(0.1)) and (j1.cosdPhiMHT > cos(2.6))))
+                 ((j1.cosdPhiMHT < cos(0.1)) and (j1.cosdPhiMHT > cos(2.6)))) and
                 ((j2 is None) or
                  ((j2.cosdPhiMHT < cos(0.1)) and (j1.cosdPhiMHT > cos(2.6)))))
 
@@ -189,9 +198,11 @@ class Stop0lBaselineProducer(Module):
                         (jet.pt > leadjet.pt) or
                         ((jet.pt == leadjet.pt) and (abs(jet.eta) < abs(leadjet.eta)))):
                         leadjet = jet
-                        leadjet.cosdPhiMHT = cos(MHTphi)*cos(jet.phi) + sin(MHTphi)*sin(jet.phi)
 
-        return (((HT5 / HT24) < 1.2) or (leadjet.cosdPhiMHT <= cos(5.3*HT5/HT24 - 4.78)))
+        if (leadjet is not None):
+            leadjet.cosdPhiMHT = cos(MHTphi)*cos(jet.phi) + sin(MHTphi)*sin(jet.phi)
+
+        return (((HT5 / HT24) < 1.2) or ((leadjet is not None) and (leadjet.cosdPhiMHT <= cos(5.3*HT5/HT24 - 4.78))))
 
     def PassJetID(self, jets):
         # In case of fastsim, it has been observed with lower efficiency
@@ -283,6 +294,11 @@ class Stop0lBaselineProducer(Module):
         PassEventFilter = self.PassEventFilter(flags)
 
         # Additional event filters
+        #
+        # Even if we move to a default jet pT cut of 30 GeV, we might want to
+        # leave the pT cuts for the cleanup cuts at 20, because they are
+        # cleanup cuts and by nature may use jets other than the jets we use
+        # for the analysis
         MHTphi = self.MHTphi(jets, ptcut=20)
         PassLowNeutralJetFilter = self.PassLowNeutralJetFilter(jets, MHTphi, ptcut=20)
         PassMuonJetFilter = self.PassMuonJetFilter(jets)
