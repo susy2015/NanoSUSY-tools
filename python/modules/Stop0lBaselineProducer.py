@@ -144,15 +144,16 @@ class Stop0lBaselineProducer(Module):
         return ((leadjet is None) or
                 ((leadjet.neEmEF < 0.03) and (leadjet.cosdphi < cos(pi - 0.4))))
 
-    def PassMuonJetFilter(self, jets):
+    def PassMuonJetFilter(self, jets, MHTphi):
         for jet in jets:
             if ((jet.pt >= 200) and
                 (abs(jet.eta) <= 2.4) and
                 ((jet.jetId & 0b010) == 0b010) and
-                (jet.dPhiMET > (pi - 0.4)) and
-                (jet.muEF > 0.5)):
-                return False
-            return True
+                (jet.muEF > 0.5):
+                cosdphi = cos(MHTphi)*cos(jet.phi) + sin(MHTphi)*sin(jet.phi)
+                if (cosdphi < cos(pi - 0.4)):
+                    return False
+        return True
 
     def PassECalNoiseJetFilter(self, jets, MHTphi):
         # Find the two leading jets with pt >= 250 and eta between 2.4 and 5
@@ -301,7 +302,7 @@ class Stop0lBaselineProducer(Module):
         # for the analysis
         MHTphi = self.MHTphi(jets, ptcut=20)
         PassLowNeutralJetFilter = self.PassLowNeutralJetFilter(jets, MHTphi, ptcut=20)
-        PassMuonJetFilter = self.PassMuonJetFilter(jets)
+        PassMuonJetFilter = self.PassMuonJetFilter(jets, MHTphi)
         PassECalNoiseJetFilter = self.PassECalNoiseJetFilter(jets, MHTphi)
         PassHTRatioDPhiTightFilter = self.PassHTRatioDPhiTightFilter(jets, MHTphi, ptcut=20)
 
