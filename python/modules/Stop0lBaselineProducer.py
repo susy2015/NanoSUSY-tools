@@ -123,7 +123,7 @@ class Stop0lBaselineProducer(Module):
         MHTx, MHTy = -sum(array([[jet.pt * cos(jet.phi), jet.pt * sin(jet.phi)]
                                  for jet in jets
                                  if ((jet.pt >= ptcut) and
-                                     (abs(jet.eta) <= 2.4) and
+                                     (abs(jet.eta) <= 5) and
                                      ((jet.jetId & 0b010) == 0b010))]), axis=0)
         return arctan2(MHTy, MHTx)
 
