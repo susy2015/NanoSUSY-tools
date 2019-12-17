@@ -14,12 +14,16 @@ void plot_trigEff() {
 	//year = "2018";
 	TString postfix = "_loose_baseline";
 	//postfix = "_highdm";
-	//postfix = "_lowdm";
+	postfix = "_lowdm";
+	postfix = "_QCD_lowdm";
+	postfix = "_QCD_highdm";
+	postfix = "_QCD_loose_baseline";
 
 	bool plot_MET = false;
 	bool plot_MET_mid = false;
 	bool plot_MET_QCD = false;
-	bool plot_MET_QCD_compare = false;
+	bool plot_MET_QCD_no_MET_sig = false;
+	bool plot_MET_QCD_compare = true;
 	bool plot_MET_mid_compare = false;
 	bool plot_Ele = false;
 	bool plot_Ele_eta = false;
@@ -34,7 +38,7 @@ void plot_trigEff() {
 	bool plot_photon = false;
 	bool plot_photon_eta = false;
 	bool plot_photon_mid = false;
-	bool plot_photon_eta_mid = true;
+	bool plot_photon_eta_mid = false;
 	bool plot_zee_mid = false;
 	bool plot_zmumu_mid = false;
 
@@ -83,18 +87,31 @@ void plot_trigEff() {
 	//title = "E_{T}^{miss} [GeV]";
 	}
 
+	if (plot_MET_QCD_no_MET_sig)
+	{
+	out_name = "MET_QCD";
+	use_3_dataset = false;
+	dataset = "JetHT_QCD";
+	dataset2 = "JetHT_QCD_no_METSig";
+	refTrg = "h_met_all";
+	sigTrg = "h_met_passtrig";
+	//title = "E_{T}^{miss} [GeV]";
+	}
+
 	if (plot_MET_QCD_compare)
 	{
 	out_name = "MET_QCD_compare";
 	use_3_dataset = true;
+	dataset = "JetHT_QCD_no_METSig";
+	dataset2 = "JetHT_QCD";
+	dataset3 = "SinglePhoton_QCD";
+
+	use_3_dataset = false;
 	dataset = "JetHT_QCD";
-	dataset2 = "JetHT_QCD_highdm";
-	dataset3 = "JetHT_QCD_lowdm";
-	//dataset = "SinglePhoton_QCD";
-	//dataset2 = "SinglePhoton_QCD_highdm";
-	//dataset3 = "SinglePhoton_QCD_lowdm";
-	refTrg = "h_met_all";
-	sigTrg = "h_met_passtrig";
+	dataset2 = "SinglePhoton_QCD";
+
+	refTrg = "h_met_all_mid";
+	sigTrg = "h_met_passtrig_mid";
 	//title = "E_{T}^{miss} [GeV]";
 	}
 

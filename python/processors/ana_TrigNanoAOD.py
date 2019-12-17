@@ -11,10 +11,10 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
 class TrigEffAnalysis(Module):
     def __init__(self, era, dataset):
-	self.Region = "signal"
-	#self.Region = "QCD"
-	#self.baseline = "loose_baseline"
-	self.baseline = "highdm"
+	#self.Region = "signal"
+	self.Region = "QCD"
+	self.baseline = "loose_baseline"
+	#self.baseline = "highdm"
 	#self.baseline = "lowdm"
 	self.maxEvents = -1
 	self.Year = era
@@ -168,18 +168,6 @@ class TrigEffAnalysis(Module):
             return False
         return True
 
-    def SelPhotons(self, photon):
-        #if photon.pt < 200:
-        #    return False
-        abeta = math.fabs(photon.eta)
-        if (abeta > 1.442 and abeta < 1.566) or (abeta > 2.5):
-            return False
-        ## cut-base ID, 2^0 loose ID
-        cutbase =  photon.cutBasedBitmap  if self.Year != "2016" else photon.cutBased
-        if not cutbase & 0b1:
-            return False
-        return True
-
     def PassJetID(self, jets):
         jetIDs = [j.jetId & 0b010 for j in jets if j.pt > 30]
         return (0 not in jetIDs)
@@ -257,10 +245,16 @@ class TrigEffAnalysis(Module):
 			zmumu_mid.append(zmumu_cand)
 
 	photon_loose = []
+	photon_mid = []
 	for photon in photons:
-		if (self.SelPhotons(photon)):
-			photon_loose.append(photon)
+		if (abs(photon.eta) < 1.442 or (1.566 < abs(photon.eta) and abs(photon.eta) < 2.5)):
+        		cutbase =  photon.cutBasedBitmap  if self.Year != "2016" else photon.cutBased
+			if(cutbase >=1):
+				photon_loose.append(photon)
+			if(cutbase >=2):
+				photon_mid.append(photon)
 	n_photon = len(photon_loose)
+	n_photon_mid = len(photon_mid)
 
         n_jets = n_jets_RA2b = 0 
         ht = ht_RA2b = 0
@@ -343,7 +337,8 @@ class TrigEffAnalysis(Module):
 	pass_loose_baseline = (pass_filter and n_jets >=2 and pass_dPhi and ht > 300) 
 	pass_highdm = (pass_loose_baseline and n_jets >=5 and pass_dPhi_highdm and n_bjets >= 1)
 	pass_lowdm = (pass_loose_baseline and Mtb < 175 and stop0l.nTop == 0 and stop0l.nW == 0
-	and stop0l.nResolved == 0 and stop0l.ISRJetPt > 300 and met.pt / math.sqrt(ht) > 10)
+	and stop0l.nResolved == 0 and stop0l.ISRJetPt > 300)
+	if(self.Region != "QCD"): pass_lowdm = pass_lowdm and met.pt / math.sqrt(ht) > 10
 
 	pass_loosejet = (pass_loose_baseline and pass_dPhi_highdm)
 	pass_looseb = (pass_loose_baseline and n_bjets >= 1)
@@ -547,7 +542,7 @@ class TrigEffAnalysis(Module):
 				self.h_ele_passtrig.Fill(ele_veto[0].pt)
         			if (ele_veto[0].pt > 40): self.h_ele_passtrig_eta.Fill(ele_veto[0].eta)
 
-	if (self.Dataset == "SinglePhoton"):
+	if (self.Dataset == "SinglePhoton" and n_photon >=1):
 		if (n_ele == 0 and n_mu == 0):
         		self.h_met_all.Fill(met.pt)
         		if (sigAccept_met):
@@ -610,12 +605,12 @@ class TrigEffAnalysis(Module):
         			if pass_baseline_RA2b_veto:
 					self.h_met_passtrig_mid_RA2b_veto.Fill(met.pt)
         				if pass_baseline_RA2b_jet: self.h_met_passtrig_mid_RA2b_jet.Fill(met.pt)
-			if (n_photon >=1):
-        			self.h_photon_all_mid.Fill(photon_loose[0].pt)
-        			if(photon_loose[0].pt > 200): self.h_photon_all_eta_mid.Fill(photon_loose[0].eta)
+			if (n_photon_mid >=1):
+        			self.h_photon_all_mid.Fill(photon_mid[0].pt)
+        			if(photon_mid[0].pt > 200): self.h_photon_all_eta_mid.Fill(photon_mid[0].eta)
         			if (sigAccept_photon):
-					self.h_photon_passtrig_mid.Fill(photon_loose[0].pt)
-					if(photon_loose[0].pt > 200): self.h_photon_passtrig_eta_mid.Fill(photon_loose[0].eta)
+					self.h_photon_passtrig_mid.Fill(photon_mid[0].pt)
+					if(photon_mid[0].pt > 200): self.h_photon_passtrig_eta_mid.Fill(photon_mid[0].eta)
 		if (n_mu_mid >= 1):
         		self.h_mu_all_mid.Fill(mu_mid[0].pt)
         		if (mu_mid[0].pt > 50): self.h_mu_all_eta_mid.Fill(mu_mid[0].eta)
@@ -632,12 +627,12 @@ class TrigEffAnalysis(Module):
         		self.h_met_all_mid.Fill(met.pt)
         		if (sigAccept_met):
 				self.h_met_passtrig_mid.Fill(met.pt)
-			if (n_photon >=1):
-        			self.h_photon_all_mid.Fill(photon_loose[0].pt)
-        			if(photon_loose[0].pt > 200): self.h_photon_all_eta_mid.Fill(photon_loose[0].eta)
+			if (n_photon_mid >=1):
+        			self.h_photon_all_mid.Fill(photon_mid[0].pt)
+        			if(photon_mid[0].pt > 200): self.h_photon_all_eta_mid.Fill(photon_mid[0].eta)
         			if (sigAccept_photon):
-					self.h_photon_passtrig_mid.Fill(photon_loose[0].pt)
-					if(photon_loose[0].pt > 200): self.h_photon_passtrig_eta_mid.Fill(photon_loose[0].eta)
+					self.h_photon_passtrig_mid.Fill(photon_mid[0].pt)
+					if(photon_mid[0].pt > 200): self.h_photon_passtrig_eta_mid.Fill(photon_mid[0].eta)
 		if (n_ele_mid >= 1):
         		self.h_ele_all_mid.Fill(ele_mid[0].pt)
         		if (ele_mid[0].pt > 40): self.h_ele_all_eta_mid.Fill(ele_mid[0].eta)
@@ -655,7 +650,7 @@ class TrigEffAnalysis(Module):
         		if (sigAccept_ele):
 				self.h_zee_passtrig_mid.Fill(zee_mid[0].Pt())
 
-	if (self.Dataset == "SinglePhoton"):
+	if (self.Dataset == "SinglePhoton" and n_photon_mid >=1):
 		if (n_ele == 0 and n_mu == 0):
         		self.h_met_all_mid.Fill(met.pt)
         		if (sigAccept_met):
@@ -666,12 +661,12 @@ class TrigEffAnalysis(Module):
         		self.h_met_all_mid.Fill(met.pt)
         		if (sigAccept_met):
 				self.h_met_passtrig_mid.Fill(met.pt)
-			if (n_photon >=1):
-        			self.h_photon_all_mid.Fill(photon_loose[0].pt)
-        			if(photon_loose[0].pt > 200): self.h_photon_all_eta_mid.Fill(photon_loose[0].eta)
+			if (n_photon_mid >=1):
+        			self.h_photon_all_mid.Fill(photon_mid[0].pt)
+        			if(photon_mid[0].pt > 200): self.h_photon_all_eta_mid.Fill(photon_mid[0].eta)
         			if (sigAccept_photon):
-					self.h_photon_passtrig_mid.Fill(photon_loose[0].pt)
-					if(photon_loose[0].pt > 200): self.h_photon_passtrig_eta_mid.Fill(photon_loose[0].eta)
+					self.h_photon_passtrig_mid.Fill(photon_mid[0].pt)
+					if(photon_mid[0].pt > 200): self.h_photon_passtrig_eta_mid.Fill(photon_mid[0].eta)
 		if (n_mu_mid >= 1 and n_ele == 0):
         		self.h_mu_all_mid.Fill(mu_mid[0].pt)
         		if (mu_mid[0].pt > 50): self.h_mu_all_eta_mid.Fill(mu_mid[0].eta)
@@ -701,12 +696,12 @@ class TrigEffAnalysis(Module):
 
 	if (self.Dataset == "MET"):
 		if (n_mu == 0 and n_ele == 0):
-			if (n_photon >=1):
-        			self.h_photon_all_mid.Fill(photon_loose[0].pt)
-        			if(photon_loose[0].pt > 200): self.h_photon_all_eta_mid.Fill(photon_loose[0].eta)
+			if (n_photon_mid >=1):
+        			self.h_photon_all_mid.Fill(photon_mid[0].pt)
+        			if(photon_mid[0].pt > 200): self.h_photon_all_eta_mid.Fill(photon_mid[0].eta)
         			if (sigAccept_photon):
-					self.h_photon_passtrig_mid.Fill(photon_loose[0].pt)
-					if(photon_loose[0].pt > 200): self.h_photon_passtrig_eta_mid.Fill(photon_loose[0].eta)
+					self.h_photon_passtrig_mid.Fill(photon_mid[0].pt)
+					if(photon_mid[0].pt > 200): self.h_photon_passtrig_eta_mid.Fill(photon_mid[0].eta)
 		if (n_mu_mid >= 1 and n_ele == 0):
         		self.h_mu_all_mid.Fill(mu_mid[0].pt)
         		if (mu_mid[0].pt > 50): self.h_mu_all_eta_mid.Fill(mu_mid[0].eta)

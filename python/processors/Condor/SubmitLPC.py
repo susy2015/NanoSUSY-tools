@@ -12,13 +12,13 @@ import getpass
 import argparse
 from collections import defaultdict
 
-n_jobs = 200
+n_jobs = 500
 
 # TODO: set OutDir (and ProjectName?) to be modified based on input filelist location
 DelExe    = '../Stop0l_postproc.py'
 OutDir = '/store/user/%s/StopStudy' %  getpass.getuser()
 tempdir = '/uscms_data/d3/%s/condor_temp/' % getpass.getuser()
-ProjectName = '2017_highdm'
+ProjectName = '2016_QCD_loose_baseline_singlePhoton'
 argument = "--inputFiles=%s.$(Process).list "
 sendfiles = ["../keep_and_drop.txt"]
 

@@ -16,7 +16,8 @@ void save_trigEff() {
 	TString out_file_name = year + "_trigger_eff.root";
 	TFile out_file(out_file_name,"RECREATE");
 
-	std::vector<TString> histo_name_vec = {"MET_loose_baseline", "MET_high_dm", "MET_low_dm", "MET_high_dm_QCD", "MET_low_dm_QCD", "Electron_pt", "Electron_eta", "Muon_pt", "Muon_eta", "Photon_pt", "Photon_eta", "Zmumu_pt", "Zee_pt"};
+	//std::vector<TString> histo_name_vec = {"MET_low_dm_QCD", "MET_low_dm_QCD_no_METSig"};
+	std::vector<TString> histo_name_vec = {"MET_loose_baseline", "MET_high_dm", "MET_low_dm", "MET_loose_baseline_QCD", "MET_high_dm_QCD", "MET_low_dm_QCD", "MET_low_dm_QCD_METSig", "Electron_pt", "Electron_eta", "Muon_pt", "Muon_eta", "Photon_pt", "Photon_eta", "Zmumu_pt", "Zee_pt"};
 
 	for(int i=0; i < histo_name_vec.size(); i++)
 	{
@@ -51,19 +52,35 @@ void save_trigEff() {
 			postfix = "_lowdm";
 		}
 
+		if (histo_name == "MET_loose_baseline_QCD")
+		{
+			dataset = "JetHT_QCD";
+			refTrg = "h_met_all_mid";
+			sigTrg = "h_met_passtrig_mid";
+			postfix = "_loose_baseline";
+		}
+
 		if (histo_name == "MET_high_dm_QCD")
 		{
 			dataset = "JetHT_QCD";
-			refTrg = "h_met_all";
-			sigTrg = "h_met_passtrig";
+			refTrg = "h_met_all_mid";
+			sigTrg = "h_met_passtrig_mid";
 			postfix = "_highdm";
+		}
+
+		if (histo_name == "MET_low_dm_QCD_METSig")
+		{
+			dataset = "JetHT_QCD";
+			refTrg = "h_met_all_mid";
+			sigTrg = "h_met_passtrig_mid";
+			postfix = "_lowdm";
 		}
 
 		if (histo_name == "MET_low_dm_QCD")
 		{
-			dataset = "JetHT_QCD";
-			refTrg = "h_met_all";
-			sigTrg = "h_met_passtrig";
+			dataset = "JetHT_QCD_no_METSig";
+			refTrg = "h_met_all_mid";
+			sigTrg = "h_met_passtrig_mid";
 			postfix = "_lowdm";
 		}
 
@@ -102,22 +119,22 @@ void save_trigEff() {
 		if (histo_name == "Photon_pt")
 		{
 			dataset = "JetHT";
-			refTrg = "h_photon_all";
-			sigTrg = "h_photon_passtrig";
+			refTrg = "h_photon_all_mid";
+			sigTrg = "h_photon_passtrig_mid";
 			postfix = "_loose_baseline";
 		}
 
 		if (histo_name == "Photon_eta")
 		{
 			dataset = "JetHT";
-			refTrg = "h_photon_all_eta";
-			sigTrg = "h_photon_passtrig_eta";
+			refTrg = "h_photon_all_eta_mid";
+			sigTrg = "h_photon_passtrig_eta_mid";
 			postfix = "_loose_baseline";
 		}
 
 		if (histo_name == "Zmumu_pt")
 		{
-			dataset = "JetHT";
+			dataset = "MET";
 			refTrg = "h_zmumu_all_mid";
 			sigTrg = "h_zmumu_passtrig_mid";
 			postfix = "_loose_baseline";
@@ -125,7 +142,7 @@ void save_trigEff() {
 
 		if (histo_name == "Zee_pt")
 		{
-			dataset = "JetHT";
+			dataset = "MET";
 			refTrg = "h_zee_all_mid";
 			sigTrg = "h_zee_passtrig_mid";
 			postfix = "_loose_baseline";

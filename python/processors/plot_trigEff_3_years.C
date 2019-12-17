@@ -12,11 +12,11 @@ void plot_trigEff_3_years() {
 	TString year = "2016";
 	//year = "2017";
 	TString postfix = "_loose_baseline";
-	//postfix = "_highdm";
-	//postfix = "_lowdm";
+	postfix = "_highdm";
+	postfix = "_lowdm";
 
 	bool plot_MET = false;
-	bool plot_MET_mid = false;
+	bool plot_MET_mid = true;
 	bool plot_MET_QCD = false;
 	bool plot_MET_QCD_compare = false;
 	bool plot_MET_mid_compare = false;
@@ -28,7 +28,7 @@ void plot_trigEff_3_years() {
 	bool plot_Ele_eta_tight = false;
 	bool plot_Mu = false;
 	bool plot_Mu_eta = false;
-	bool plot_Mu_mid = true;
+	bool plot_Mu_mid = false;
 	bool plot_Mu_eta_mid = false;
 	bool plot_photon = false;
 	bool plot_photon_eta = false;
@@ -74,7 +74,8 @@ void plot_trigEff_3_years() {
 	{
 	out_name = "MET_QCD";
 	//use_3_dataset = false;
-	dataset = "JetHT_QCD";
+	//dataset = "JetHT_QCD";
+	dataset = "JetHT_QCD_no_METSig";
 	//dataset2 = "SinglePhoton_QCD";
 	refTrg = "h_met_all";
 	sigTrg = "h_met_passtrig";
@@ -228,12 +229,12 @@ void plot_trigEff_3_years() {
 	{
 	out_name = "photon";
 	//use_3_dataset = true;
-	dataset = "SingleMuon";
-	//dataset2 = "JetHT";
-	//dataset3 = "MET";
+	//dataset = "SingleMuon";
+	//dataset = "JetHT";
+	dataset = "MET";
 	refTrg = "h_photon_all";
 	sigTrg = "h_photon_passtrig";
-	//title = "E_{T}^{miss} [GeV]";
+	title = "Photon p_{T} [GeV]";
 	}
 
 	if (plot_photon_eta)
@@ -245,15 +246,15 @@ void plot_trigEff_3_years() {
 	//dataset3 = "JetHT";
 	refTrg = "h_photon_all_eta";
 	sigTrg = "h_photon_passtrig_eta";
-	//title = "E_{T}^{miss} [GeV]";
+	title = "Photon #eta, p_{T} > 200 [GeV]";
 	}
 
 	if (plot_photon_mid)
 	{
 	out_name = "photon_mid";
 	//use_3_dataset = false;
-	dataset = "MET";
-	//dataset = "JetHT";
+	//dataset = "MET";
+	dataset = "JetHT";
 	//dataset3 = "SingleMuon";
 	refTrg = "h_photon_all_mid";
 	sigTrg = "h_photon_passtrig_mid";
@@ -264,8 +265,8 @@ void plot_trigEff_3_years() {
 	{
 	out_name = "photon_eta_mid";
 	//use_3_dataset = false;
-	dataset = "MET";
-	//dataset = "JetHT";
+	//dataset = "MET";
+	dataset = "JetHT";
 	//dataset3 = "SingleMuon";
 	refTrg = "h_photon_all_eta_mid";
 	sigTrg = "h_photon_passtrig_eta_mid";
@@ -334,6 +335,11 @@ void plot_trigEff_3_years() {
         h_met_TEff->SetMarkerColor(kBlack);
         h_met_TEff->Draw();
         gPad->Update();
+	std::cout << "\nThe 1st eff" << std::endl;
+	for (int i = 0; i < h_met_TEff->GetPaintedGraph()->GetN(); i++)
+	{
+		//std::cout << i << ": " << h_met_TEff->GetPaintedGraph()->GetY()[i] << std::endl;
+	}
         auto h_temp = h_met_TEff->GetPaintedGraph();
         h_met_MG->Add(h_temp);
     
@@ -342,7 +348,7 @@ void plot_trigEff_3_years() {
 
 
 	TString infile2 = "results" + postfix + "/2017_" + dataset + ".root";
-	//TString infile2 = "results_loose_baseline/2016_SingleElectron.root";
+	//TString infile2 = "results_lowdm/2016_JetHT_QCD_no_METSig.root";
 	TFile* f_in2 = new TFile(infile2);
 	TH1F* h_met_denom2 = (TH1F*) f_in2->Get("TrigAnalyzerMiniAOD/" + refTrg);
 	TH1F* h_met_num2 = (TH1F*) f_in2->Get("TrigAnalyzerMiniAOD/" + sigTrg);
@@ -355,11 +361,16 @@ void plot_trigEff_3_years() {
         h_met_TEff2->SetMarkerColor(kBlue);
         h_met_TEff2->Draw();
         gPad->Update();
+	std::cout << "\nThe 2nd eff" << std::endl;
+	for (int i = 0; i < h_met_TEff2->GetPaintedGraph()->GetN(); i++)
+	{
+		//std::cout << i << ": " << h_met_TEff2->GetPaintedGraph()->GetY()[i] << std::endl;
+	}
         auto h_temp2 = h_met_TEff2->GetPaintedGraph();
         h_met_MG->Add(h_temp2);
 
         leg->AddEntry(h_met_TEff2,"2017 " + dataset,"lep");
-        //leg->AddEntry(h_met_TEff2,"+ RA2b veto","lep");
+        //leg->AddEntry(h_met_TEff2,"2016 no METSig","lep");
 
 	TString infile3 = "results" + postfix + "/2018_" + dataset + ".root";
 	//TString infile3 = "results_loose_baseline/2016_SingleElectron.root";
@@ -375,10 +386,10 @@ void plot_trigEff_3_years() {
         h_met_TEff3->SetMarkerColor(kRed);
         h_met_TEff3->Draw();
         gPad->Update();
-        int n_bins = h_met_TEff3->GetPaintedGraph()->GetN();
-	for (int i = 0; i < n_bins; i++)
+	std::cout << "\nThe 3rd eff" << std::endl;
+	for (int i = 0; i < h_met_TEff3->GetPaintedGraph()->GetN(); i++)
 	{
-		std::cout << i << ": " << h_met_TEff3->GetPaintedGraph()->GetY()[i] << std::endl;
+		//std::cout << i << ": " << h_met_TEff3->GetPaintedGraph()->GetY()[i] << std::endl;
 	}
         auto h_temp3 = h_met_TEff3->GetPaintedGraph();
         h_met_MG->Add(h_temp3);
@@ -443,8 +454,8 @@ void plot_trigEff_3_years() {
 	h_ratio3->Draw("same");
 	}
 */
-	myCanvas->SaveAs("plots/3_years_HLT_" + out_name + "_Eff" + postfix + ".png"); 
-	myCanvas->SaveAs("plots/3_years_HLT_" + out_name + "_Eff" + postfix + ".pdf"); 
+	myCanvas->SaveAs("plots_for_AN/3_years_HLT_" + out_name + "_Eff" + postfix + ".png"); 
+	myCanvas->SaveAs("plots_for_AN/3_years_HLT_" + out_name + "_Eff" + postfix + ".pdf"); 
 
 	return;
 }
